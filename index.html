@@ -712,6 +712,9 @@ header h1 span{color:var(--accent)}
 #lb .row a{margin-left:auto;color:var(--accent);font-size:13px;text-decoration:none;white-space:nowrap}
 #lb .x{position:absolute;top:calc(10px + env(safe-area-inset-top));right:10px;width:42px;height:42px;padding:0;font-size:22px;border-radius:50%;z-index:2}
 #lb .count{font-size:12px;color:#8f8573}
+.popup-open .legend,.popup-open~.note,body.popup-open .note{opacity:0;pointer-events:none;transition:opacity .15s}
+.legend,.note{transition:opacity .15s}
+.pop .nav button{min-height:36px;padding:6px 14px}
 </style>
 </head>
 <body>
@@ -866,8 +869,8 @@ function render(){
     const ys=list.map(Y).filter(Boolean);const y=ys.length?Math.min(...ys):0;
     const m=L.circleMarker([pin.p[0],pin.p[1]],{radius:rad(list.length),weight:1.2,color:'#16130f',fillColor:colorFor(y),fillOpacity:.92});
     let idx=0;
-    m.bindPopup(()=>popupHTML(pin,idx,list),{maxWidth:300,autoPanPadding:[20,60]});
-    m.on('popupopen',e=>{const el=e.popup.getElement();el.onclick=ev=>{if(ev.target.dataset&&ev.target.dataset.lb){openLB(list[idx]);return}const d=ev.target.dataset&&ev.target.dataset.d;if(!d)return;idx=(idx+Number(d)+list.length)%list.length;e.popup.setContent(popupHTML(pin,idx,list));}});
+    m.bindPopup(()=>popupHTML(pin,idx,list),{maxWidth:300,autoPanPaddingTopLeft:[20,30],autoPanPaddingBottomRight:[20,30]});
+    m.on('popupopen',e=>{const el=e.popup.getElement();L.DomEvent.disableClickPropagation(el);el.onclick=ev=>{const t=ev.target.closest&&ev.target.closest('[data-lb],[data-d]');if(!t)return;ev.preventDefault();ev.stopPropagation();if(t.dataset.lb){openLB(list[idx]);return}idx=(idx+Number(t.dataset.d)+list.length)%list.length;setTimeout(()=>e.popup.setContent(popupHTML(pin,idx,list)),0)}});
     m.bindTooltip(esc(list[0].l)+(list.length>1?` · ${list.length} shots`:''),{direction:'top',offset:[0,-6]});
     list.forEach(it=>{if(it.i)SHOTS.push({it,ll:[pin.p[0],pin.p[1]]})});
     m._n=list.length;m.addTo(layer);bounds.push([pin.p[0],pin.p[1]]);markers.push(m);
@@ -882,6 +885,7 @@ sel.addEventListener('change',()=>{const b=render();if(sel.value!==''&&b.length)
   else if(sel.value==='')map.setView([40.745,-73.975],12)});
 const lg=L.control({position:'bottomright'});lg.onAdd=()=>{const d=L.DomUtil.create('div','legend');d.innerHTML=DECADES.map(x=>`<div><i style="background:${x[1]}"></i>${x[2]}</div>`).join('')+'<div><i style="background:#9a9083"></i>Year unknown</div>';return d};lg.addTo(map);
 PINS.forEach(p=>p.x.forEach(it=>{it.u=unpack(it.u);it.i=unpack(it.i)}));
+map.on('popupopen',()=>document.body.classList.add('popup-open'));map.on('popupclose',()=>document.body.classList.remove('popup-open'));
 render();
 </script>
 </body>
