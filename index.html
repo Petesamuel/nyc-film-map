@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>NYC Film Locations: Then &amp; Now Map v2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -671,7 +671,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
 :root{--ink:#1d1c1a;--paper:#ffffff;--accent:#f2b705;--muted:#6f6b64;--line:#e7e4df;--soft:#f5f4f1;--shadow:0 1px 2px rgba(29,28,26,.12),0 4px 14px rgba(29,28,26,.10)}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;font-family:Figtree,system-ui,sans-serif;color:var(--ink);background:#c9d6dc}
+html,body{margin:0;height:100%;touch-action:manipulation;font-family:Figtree,system-ui,sans-serif;color:var(--ink);background:#c9d6dc}
 #app{display:flex;flex-direction:column;height:100%}
 #map{flex:1;background:#b9cdd6}
 .leaflet-popup-content-wrapper{border-radius:10px;padding:0;overflow:hidden}
@@ -1196,6 +1196,23 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();closeD
 // ===== open a shared view: #at=lat,lon,zoom =====
 (function(){const m=location.hash.match(/at=(-?[\d.]+),(-?[\d.]+),?(\d+)?/);if(m)map.setView([+m[1],+m[2]],+(m[3]||18),{animate:false})})();
 syncChips();
+// ===== map gestures: double-tap to zoom in, two-finger tap to zoom out (works the same on iPhone and Android) =====
+(function(){const el=map.getContainer();map.doubleClickZoom.disable();
+  let t0=null,last=null,lastTouchEnd=0,two=null;
+  const skip=e=>e.target.closest&&e.target.closest('.leaflet-popup,.leaflet-control,#top,#count');
+  el.addEventListener('touchstart',e=>{if(skip(e)){t0=null;two=null;return}
+    if(e.touches.length===1){const t=e.touches[0];t0={x:t.clientX,y:t.clientY,at:Date.now()};two=null}
+    else if(e.touches.length===2){t0=null;const a=e.touches[0],b=e.touches[1];two={x:(a.clientX+b.clientX)/2,y:(a.clientY+b.clientY)/2,d:Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY),at:Date.now(),z:map.getZoom()}}},{passive:true});
+  el.addEventListener('touchmove',e=>{if(t0&&e.touches.length===1){const t=e.touches[0];if(Math.hypot(t.clientX-t0.x,t.clientY-t0.y)>10)t0=null}
+    if(two&&e.touches.length===2){const a=e.touches[0],b=e.touches[1];if(Math.abs(Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY)-two.d)>12)two=null}},{passive:true});
+  el.addEventListener('touchend',e=>{lastTouchEnd=Date.now();
+    if(two&&e.touches.length===0){if(Date.now()-two.at<300&&map.getZoom()===two.z){const r=el.getBoundingClientRect();map.setZoomAround(L.point(two.x-r.left,two.y-r.top),map.getZoom()-1)}two=null;return}
+    if(!t0||e.touches.length)return;const t=e.changedTouches[0],now=Date.now();if(now-t0.at>300){t0=null;return}
+    if(last&&now-last.at<320&&Math.hypot(t.clientX-last.x,t.clientY-last.y)<35){const r=el.getBoundingClientRect();map.closePopup();map.setZoomAround(L.point(t.clientX-r.left,t.clientY-r.top),Math.min(map.getMaxZoom(),map.getZoom()+1));last=null;if(e.cancelable)e.preventDefault()}
+    else last={x:t.clientX,y:t.clientY,at:now};t0=null},{passive:false});
+  // mouse: double-click zooms in, shift + double-click zooms out
+  el.addEventListener('dblclick',e=>{if(skip(e)||Date.now()-lastTouchEnd<700)return;const r=el.getBoundingClientRect();map.setZoomAround(L.point(e.clientX-r.left,e.clientY-r.top),map.getZoom()+(e.shiftKey?-1:1))});
+})();
 render();
 </script>
 </body>
