@@ -816,17 +816,15 @@ function imgUrl(u,w){return /wp\.com|wordpress|nycinfilm|scoutingny|silentlocati
 function normAddr(l){const parts=l.split(/\s*&\s*/);if(parts.length>1)return parts.map(normAddr).sort().join(' & ');return l.toLowerCase().replace(/[.,']/g,'').replace(/\bstreet\b/g,'st').replace(/\bavenue\b/g,'ave').replace(/\bplace\b/g,'pl').replace(/\beast\b/g,'e').replace(/\bwest\b/g,'w').replace(/(\d+)(st|nd|rd|th)\b/g,'$1').replace(/\s+/g,' ').trim()}
 function makeTabs(list){const m=new Map();list.forEach(it=>{const k=normAddr(it.l);if(!m.has(k))m.set(k,{label:it.l,items:[]});m.get(k).items.push(it)});return [...m.values()].sort((a,b)=>b.items.length-a.items.length)}
 function popupHTML(st){
-  const tab=st.tabs[st.t],list=tab.items,idx=st.i,it=list[idx],f=FILMS[it.f],src=SOURCES[it.s];
-  const tabsBar=st.tabs.length>1?`<div class="tabs">${st.tabs.map((tb,k)=>`<button class="tab${k===st.t?' on':''}" data-t="${k}">${esc(tb.label)} <b>${tb.items.length}</b></button>`).join('')}</div>`:'';
-  return `<div class="pop">${tabsBar}
+  const list=st.items,idx=st.i,it=list[idx],f=FILMS[it.f],src=SOURCES[it.s];
+  return `<div class="pop">
     ${it.i?`<img class="thumb" data-lb="1" src="${esc(imgUrl(it.i,580))}" alt="" onerror="this.style.display='none'">`:''}
     <div class="body">
       <div class="film">${esc(T(it))}</div>
       <div class="scene">${it.h?esc(f.t)+(it.y?' · '+it.y:'')+' · ':''}${it.c?'Scene: '+esc(it.c)+' · ':''}via ${esc(src)}</div>
       <div class="addr">${esc(it.l)}</div>
-      ${it.i?'<button class="view" data-lb="1">View image</button>':''}
       <a class="go" href="${esc(it.u)}" target="_blank" rel="noopener">View this shot on ${esc(src)} &rarr;</a>
-      ${list.length>1?`<div class="nav"><button data-d="-1">&larr; Prev</button><span>${idx+1} of ${list.length} shots</span><button data-d="1">Next &rarr;</button></div>`:''}
+      ${list.length>1?`<div class="nav"><button data-d="-1">&larr; Prev</button><span>${idx+1} of ${list.length} shots${st.n>1?' · '+st.n+' addresses':''}</span><button data-d="1">Next &rarr;</button></div>`:''}
     </div></div>`;
 }
 const layer=L.layerGroup().addTo(map);
@@ -886,14 +884,14 @@ function render(){
     shots+=list.length;
     const ys=list.map(Y).filter(Boolean);const y=ys.length?Math.min(...ys):0;
     const m=L.circleMarker([pin.p[0],pin.p[1]],{radius:rad(list.length),weight:1.2,color:'#16130f',fillColor:colorFor(y),fillOpacity:.92});
-    const st={tabs:makeTabs(list),t:0,i:0};
+    const tabs=makeTabs(list),st={items:tabs.flatMap(tb=>tb.items),n:tabs.length,i:0};
     m.bindPopup(()=>popupHTML(st),{maxWidth:300,autoPanPaddingTopLeft:[20,30],autoPanPaddingBottomRight:[20,30]});
     m.on('popupopen',e=>{const el=e.popup.getElement();L.DomEvent.disableClickPropagation(el);L.DomEvent.disableScrollPropagation(el);el.onclick=ev=>{const t=ev.target.closest&&ev.target.closest('[data-lb],[data-d],[data-t]');if(!t)return;ev.preventDefault();ev.stopPropagation();
-      const items=st.tabs[st.t].items;
+      const items=st.items;
       if(t.dataset.lb){openLB(items[st.i]);return}
-      if(t.dataset.t!==undefined){st.t=+t.dataset.t;st.i=0}else{st.i=(st.i+Number(t.dataset.d)+items.length)%items.length}
-      setTimeout(()=>{e.popup.setContent(popupHTML(st));const on=e.popup.getElement().querySelector('.tab.on');if(on)on.scrollIntoView({inline:'nearest',block:'nearest'})},0)}});
-    m.bindTooltip(st.tabs.length>1?`${st.tabs.length} addresses · ${list.length} shots`:esc(list[0].l)+(list.length>1?` · ${list.length} shots`:''),{direction:'top',offset:[0,-6]});
+      st.i=(st.i+Number(t.dataset.d)+items.length)%items.length;
+      setTimeout(()=>e.popup.setContent(popupHTML(st)),0)}});
+    m.bindTooltip(st.n>1?`${st.n} addresses · ${list.length} shots`:esc(list[0].l)+(list.length>1?` · ${list.length} shots`:''),{direction:'top',offset:[0,-6]});
     list.forEach(it=>{if(it.i)SHOTS.push({it,ll:[pin.p[0],pin.p[1]]})});
     m._n=list.length;m.addTo(layer);bounds.push([pin.p[0],pin.p[1]]);markers.push(m);
   });
