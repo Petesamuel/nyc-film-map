@@ -686,7 +686,7 @@ html,body{margin:0;height:100%;font-family:Figtree,system-ui,sans-serif;color:va
 .pop a.go:hover{background:#000}
 .pop .nav{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:12px;color:var(--muted)}
 .pop .nav button{font:inherit;border:1px solid var(--line);background:#fff;border-radius:5px;padding:3px 10px;cursor:pointer}
-.pop .thumb{cursor:zoom-in}
+.pop .thumb{cursor:zoom-in;touch-action:pan-y}
 .pop .view{display:block;width:100%;margin-bottom:6px;font:inherit;font-weight:600;border:1px solid var(--line);background:#fff;border-radius:6px;padding:7px;cursor:pointer}
 #lb{position:fixed;inset:0;z-index:5000;background:rgba(10,9,7,.96);display:none;flex-direction:column;color:var(--paper)}
 #lb.on{display:flex}
@@ -975,7 +975,7 @@ function closeLB(){lb.classList.remove('on');lbImg.removeAttribute('src');if(typ
 lb.querySelector('.x').onclick=closeLB;
 lb.querySelector('.lbacts').addEventListener('click',e=>{const t=e.target.closest('.act');if(t){const s=seq[pos];doAct(t,s.it,s.ll);lb.querySelector('.lbacts').innerHTML=actsHTML(s.it,true)}});
 lb.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>step(+b.dataset.n));
-lb.querySelector('.stage').addEventListener('click',e=>{if(e.target===e.currentTarget)closeLB()});
+lb.querySelector('.stage').addEventListener('click',e=>{if(e.target===e.currentTarget&&Date.now()-lastTouch>700)closeLB()});
 document.addEventListener('keydown',e=>{if(!lb.classList.contains('on'))return;if(e.key==='Escape')closeLB();if(e.key==='ArrowRight')step(1);if(e.key==='ArrowLeft')step(-1);if(e.key==='+'||e.key==='='){const r=st.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,Z.s*1.5,true)}if(e.key==='-'){const r=st.getBoundingClientRect();zoomAt(r.left+r.width/2,r.top+r.height/2,Z.s/1.5,true)}if(e.key==='0')zReset(true)});
 // ---- photo viewer gestures: pinch / double-tap / wheel zoom, drag to pan, swipe to change photo ----
 const st=lb.querySelector('.stage');
@@ -992,7 +992,7 @@ function zClamp(){const w=lbImg.offsetWidth,h=lbImg.offsetHeight,sr=st.getBoundi
 function zoomAt(cx,cy,ns,anim){const sr=st.getBoundingClientRect();ns=Math.min(MAXZ,Math.max(1,ns));
   const px=cx-sr.left-lbImg.offsetLeft,py=cy-sr.top-lbImg.offsetTop;   // point in stage space relative to image origin
   Z.x=px-(px-Z.x)*(ns/Z.s);Z.y=py-(py-Z.y)*(ns/Z.s);Z.s=ns;zClamp();zApply(anim)}
-let g=null,lastTap=0,lastTapXY=null,lastTouch=0;
+let g=null,lastTap=0,lastTapXY=null,lastTouch=0,tapTimer=null;
 st.addEventListener('touchend',()=>{lastTouch=Date.now()},{passive:true,capture:true});
 st.addEventListener('touchstart',e=>{
   if(e.target.closest('button,a'))return;
@@ -1009,8 +1009,11 @@ st.addEventListener('touchmove',e=>{if(!g)return;e.preventDefault();const t=[...
 st.addEventListener('touchend',e=>{if(!g)return;const ct=e.changedTouches[0];
   if(g.mode==='pinch'){if(e.touches.length===0){if(Z.s<1.05)zReset(true);g=null}else{const t=e.touches[0];g={mode:'pan',sx:t.clientX,sy:t.clientY,x0:Z.x,y0:Z.y,moved:true}}return}
   if(g.mode==='swipe'&&g.moved){const dx=ct.clientX-g.sx,dy=ct.clientY-g.sy;if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy))step(dx<0?1:-1);else if(dy>90&&Math.abs(dy)>Math.abs(dx))closeLB()}
-  if(!g.moved&&e.target===lbImg){const now=Date.now();
-    if(now-lastTap<300&&lastTapXY&&Math.hypot(ct.clientX-lastTapXY[0],ct.clientY-lastTapXY[1])<40){Z.s>1.01?zReset(true):zoomAt(ct.clientX,ct.clientY,2.5,true);lastTap=0}else{lastTap=now;lastTapXY=[ct.clientX,ct.clientY]}}
+  if(!g.moved&&(e.target===lbImg||e.target===st)){const now=Date.now(),sr=st.getBoundingClientRect(),fx=(ct.clientX-sr.left)/sr.width;
+    if(e.target===lbImg&&now-lastTap<300&&lastTapXY&&Math.hypot(ct.clientX-lastTapXY[0],ct.clientY-lastTapXY[1])<40){clearTimeout(tapTimer);Z.s>1.01?zReset(true):zoomAt(ct.clientX,ct.clientY,2.5,true);lastTap=0}
+    else{lastTap=now;lastTapXY=[ct.clientX,ct.clientY];clearTimeout(tapTimer);const onImg=e.target===lbImg;
+      // wait briefly so a double-tap can still zoom; then a single tap on a side moves photos
+      tapTimer=setTimeout(()=>{if(Z.s>1.01)return;if(fx<0.33)step(-1);else if(fx>0.67)step(1);else if(!onImg)closeLB()},onImg?300:0)}}
   g=null});
 // mouse: double-click to zoom, wheel to zoom, drag to pan
 lbImg.addEventListener('dblclick',e=>{e.preventDefault();if(Date.now()-lastTouch<700)return;Z.s>1.01?zReset(true):zoomAt(e.clientX,e.clientY,2.5,true)});
@@ -1035,9 +1038,11 @@ function render(){
     const m=L.circleMarker([pin.p[0],pin.p[1]],{radius:rad(list.length),weight:1.2,color:'#16130f',fillColor:colorFor(y),fillOpacity:.92});
     const tabs=makeTabs(list),st={items:tabs.flatMap(tb=>tb.items),n:tabs.length,i:0};m.on('popupopen',()=>addRecent(st.items[0],pin.p));
     m.bindPopup(()=>popupHTML(st),{maxWidth:600,minWidth:260,autoPanPaddingTopLeft:[12,124],autoPanPaddingBottomRight:[12,24],className:'wide'});
-    m.on('popupopen',e=>{OPENPOP=e.popup;const el=e.popup.getElement();L.DomEvent.disableClickPropagation(el);L.DomEvent.disableScrollPropagation(el);el.onclick=ev=>{const t=ev.target.closest&&ev.target.closest('[data-lb],[data-d],[data-t],[data-like],[data-save],[data-share]');if(!t)return;if(t.dataset.like!==undefined||t.dataset.save!==undefined||t.dataset.share!==undefined){ev.preventDefault();ev.stopPropagation();doAct(t,st.items[st.i],pin.p);return}ev.preventDefault();ev.stopPropagation();
+    m.on('popupopen',e=>{OPENPOP=e.popup;const el=e.popup.getElement();
+      let sw=null;el.ontouchstart=ev=>{if(ev.touches.length===1&&ev.target.closest('.thumb'))sw={x:ev.touches[0].clientX,y:ev.touches[0].clientY};else sw=null};
+      el.ontouchend=ev=>{if(!sw)return;const dx=ev.changedTouches[0].clientX-sw.x,dy=ev.changedTouches[0].clientY-sw.y;sw=null;if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)*1.3&&st.items.length>1){ev.preventDefault();st.i=(st.i+(dx<0?1:-1)+st.items.length)%st.items.length;el._swiped=Date.now();setTimeout(()=>e.popup.setContent(popupHTML(st)),0)}};L.DomEvent.disableClickPropagation(el);L.DomEvent.disableScrollPropagation(el);el.onclick=ev=>{const t=ev.target.closest&&ev.target.closest('[data-lb],[data-d],[data-t],[data-like],[data-save],[data-share]');if(!t)return;if(t.dataset.like!==undefined||t.dataset.save!==undefined||t.dataset.share!==undefined){ev.preventDefault();ev.stopPropagation();doAct(t,st.items[st.i],pin.p);return}ev.preventDefault();ev.stopPropagation();
       const items=st.items;
-      if(t.dataset.lb){openLB(items[st.i]);return}
+      if(t.dataset.lb){if(el._swiped&&Date.now()-el._swiped<500)return;openLB(items[st.i]);return}
       st.i=(st.i+Number(t.dataset.d)+items.length)%items.length;
       setTimeout(()=>e.popup.setContent(popupHTML(st)),0)}});
     m.bindTooltip(st.n>1?`${st.n} addresses · ${list.length} shots`:esc(list[0].l)+(list.length>1?` · ${list.length} shots`:''),{direction:'top',offset:[0,-6]});
