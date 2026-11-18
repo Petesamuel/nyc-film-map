@@ -842,6 +842,9 @@ html[data-theme=dark] .leaflet-container a.leaflet-popup-close-button{color:var(
 .lct{flex:0 0 76px;border:0;background:transparent;padding:0;font:inherit;font-size:12.5px;color:var(--ink);cursor:pointer;text-align:center}
 .lct i{display:block;width:72px;height:72px;margin:0 auto 6px;border-radius:12px;border:2px solid transparent;box-sizing:border-box}
 .lct.on i{border-color:#2b6fd6}.lct.on span{color:#2b6fd6;font-weight:600}
+.psl{display:flex;align-items:center;gap:10px;padding:2px 2px 0}
+.psl i{flex:none;border-radius:50%;background:#7e57c2}.psl .d1{width:6px;height:6px}.psl .d2{width:16px;height:16px}
+.psl input{flex:1;accent-color:#2b6fd6;height:28px}
 .heatprev{background:radial-gradient(circle at 40% 45%,#7d0613 0,#e8291c 16%,#ff8a2b 30%,#ffd04d 44%,rgba(255,243,176,.6) 56%,transparent 66%),radial-gradient(circle at 75% 75%,#ff8a2b 0,#ffd04d 14%,transparent 30%),#f6f3ec}
 /* appearance panel */
 .set{padding:6px 20px 24px}
@@ -921,10 +924,10 @@ function dec(a){const o=[];let x=0,y=0;for(let i=0;i<a.length;i+=2){x+=a[i];y+=a
 
 const map=L.map('map',{preferCanvas:true,zoomControl:false,minZoom:3,maxZoom:19}).setView([40.745,-73.975],12);
 // ===== appearance settings =====
-const PREF_DEF={theme:'auto',map:'detailed',pins:'s',show:'zoom',view:'pins'};
+const PREF_DEF={theme:'auto',map:'detailed',pscale:1,show:'zoom',view:'pins'};
 const PREF=(()=>{let p={};try{p=JSON.parse(localStorage.getItem('nycmap.prefs'))||{}}catch(e){}
   if(!p.map){try{const o=JSON.parse(localStorage.getItem('nycmap.style'));if(o)p.map=o==='streets'?'standard':o}catch(e){}}
-  const MIG={vintage:'detailed',auto:'detailed',standard:'detailed',dark:'detailed',light:'minimal',simple:'minimal',streets:'detailed'};if(MIG[p.map])p.map=MIG[p.map];
+  const MIG={vintage:'detailed',auto:'detailed',standard:'detailed',dark:'detailed',light:'minimal',simple:'minimal',streets:'detailed'};if(MIG[p.map])p.map=MIG[p.map];if(p.pins&&p.pscale==null)p.pscale={s:1,m:1.6,l:2.2}[p.pins]||1;delete p.pins;
   return Object.assign({},PREF_DEF,window.PREF_OVERRIDE||{},p)})();
 const darkMQ=window.matchMedia?matchMedia('(prefers-color-scheme: dark)'):null;
 function isDark(){return PREF.theme==='dark'||(PREF.theme==='auto'&&darkMQ&&darkMQ.matches)}
@@ -1055,15 +1058,16 @@ const SHOWZ_OF={zoom:10,close:14};const showZ=()=>SHOWZ_OF[PREF.show]||0;const P
 let FILT=false,FILTN=0;
 // while filtering, pins get bigger the fewer there are, at every zoom, so results are easy to spot
 // only a short list of results gets bigger pins; a filter that still leaves lots of pins keeps the normal size
-const BIGN=400;function filtR(){const k=PREF.pins==='s'?.8:PREF.pins==='l'?1.2:1;return k*(FILTN<=30?8:FILTN<=100?6.5:FILTN<=400?5.2:4.2)}
-function rad(n){const z=map.getZoom(),r=PIN_R[PREF.pins]||PIN_R.m;
+const PS=()=>Math.max(.6,Math.min(2.6,+PREF.pscale||1));
+const BIGN=400;function filtR(){const k=.75+.25*PS();return k*(FILTN<=30?8:FILTN<=100?6.5:FILTN<=400?5.2:4.2)}
+function rad(n){const z=map.getZoom(),r=PIN_R.s.map(x=>x*PS());
   if(FILT&&FILTN<=BIGN){const b=Math.max(filtR(),r[Math.max(0,Math.min(6,z-11))]);return n>3?b+1.5:b}
-  let b=r[Math.max(0,Math.min(6,z-11))];b=n>3?b+(PREF.pins==='s'?1:2):b;
+  let b=r[Math.max(0,Math.min(6,z-11))];b=n>3?b+PS():b;
   // in the zoom-in modes pins start tiny where they first appear and grow to full size over the next few zoom levels
   if(PREF.show!=='always'){const k=z-showZ(),G=PREF.show==='zoom'?[.22,.26,.32,.45,.65,.85]:[.3,.5,.75];if(k<G.length)b=Math.max(1,b*G[Math.max(0,k)])}
   return b}
 function pinOp(){if(FILT&&FILTN<=BIGN)return .95;if(PREF.show==='always')return .92;const k=map.getZoom()-showZ();return k<=1?.6:k<=3?.75:.92}
-function pinW(r){if(FILT&&FILTN<=BIGN)return PREF.pins==='s'?1:1.5;const w=PREF.pins==='s'?.8:PREF.pins==='l'?1.5:1.2;return r?(r<2.2||(PREF.show!=='always'&&map.getZoom()-showZ()<=2)?0:Math.min(w,Math.max(.4,r*.3))):w}
+function pinW(r){const w=Math.min(1.5,.5+.35*PS());if(FILT&&FILTN<=BIGN)return w+.3;return r?(r<2.2||(PREF.show!=='always'&&map.getZoom()-showZ()<=2)?0:Math.min(w,Math.max(.4,r*.3))):w}
 let lastZ=null;map.on('zoomend',()=>{const z=map.getZoom();if(lb.classList.contains('on')||(lastZ!==null&&(lastZ>=14)===(z>=14)&&z<14&&(PREF.show==='always'||(lastZ>=showZ())===(z>=showZ())))){markers.forEach(m=>{const r=rad(m._n||1);m.setRadius(r);m.setStyle({weight:pinW(r),fillOpacity:pinOp()})})}else{render()}lastZ=z});
 function Y(it){return it.y||FILMS[it.f].y}
 function T(it){return it.t||FILMS[it.f].t}
@@ -1348,12 +1352,9 @@ function appearHTML(){
   const PV={minimal:svg(Pp,0),detailed:svg(Pp,1),
     vintage:`url(https://tile.openstreetmap.org/${TO}.png)`,satellite:`url(https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${TX})`};
   const maps=[['minimal','Minimal'],['detailed','Detailed'],['satellite','Satellite']];
-  const r=PIN_R[PREF.pins],pv=[r[3],r[4],r[6]].map((x,i)=>`<b style="width:${x*2}px;height:${x*2}px;background:${['#7e57c2','#2b6fd6','#e0533d'][i]};border-width:${pinW()}px"></b>`).join('');
   return `<div class="set">
   <h4>Theme</h4>${seg('theme',[['light','Light'],['dark','Dark'],['auto','Automatic']])}
   <p class="hint">Automatic follows your device's light or dark setting.</p>
-  <h4>Pin size</h4>${seg('pins',[['s','Small'],['m','Medium'],['l','Large']])}
-  <div class="pv" aria-hidden="true">${pv}</div>
   <h4>Show pins</h4>${seg('show',[['always','Always'],['zoom','Zoomed in'],['close','Up close']])}
   <p class="hint">Zoomed in shows small pins from the city view, Up close from a few blocks. They start as small dots and grow as you zoom in. Searches and filters always show their pins.</p>
   <button class="btn ghost reset" data-resetpref>Reset to defaults</button></div>`}
@@ -1376,7 +1377,9 @@ const HEATBTN=new HeatBtn().addTo(map);
     const sv=(det)=>`url(data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'><rect width='80' height='80' fill='${P.land}'/><path d='M58 0h22v80H46z' fill='${P.water}'/><rect x='8' y='46' width='22' height='18' rx='2' fill='${P.park}'/><g stroke='${P.case}' stroke-width='5'><path d='M0 34h58M0 72h52M34 0v80'/></g><g stroke='${P.minor}' stroke-width='3.5'><path d='M0 34h58M0 72h52M34 0v80'/></g>${det?`<path d='M0 12L64 62' stroke='${P.priC}' stroke-width='7'/><path d='M0 12L64 62' stroke='${P.pri}' stroke-width='5'/><circle cx='18' cy='20' r='3.5' fill='#c8794a'/><circle cx='48' cy='50' r='3.5' fill='#5b8fb0'/>`:''}</svg>`).replace(/'/g,'%27')})`;
     const T={minimal:sv(0),detailed:sv(1),satellite:'url(https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/15/12318/9650)'};
     const cur=PREF.map;
-    card.innerHTML=`<div class="lchead"><b>Map type</b><button class="lcx" aria-label="Close">${IC.close||'×'}</button></div><div class="lcrow">${[['minimal','Minimal'],['detailed','Detailed'],['satellite','Satellite']].map(([v,n])=>`<button class="lct${cur===v?' on':''}" data-map="${v}" aria-pressed="${cur===v}"><i style="background:${T[v]} center/cover"></i><span>${n}</span></button>`).join('')}</div>`};
+    card.innerHTML=`<div class="lchead"><b>Map type</b><button class="lcx" aria-label="Close">${IC.close||'×'}</button></div><div class="lcrow">${[['minimal','Minimal'],['detailed','Detailed'],['satellite','Satellite']].map(([v,n])=>`<button class="lct${cur===v?' on':''}" data-map="${v}" aria-pressed="${cur===v}"><i style="background:${T[v]} center/cover"></i><span>${n}</span></button>`).join('')}</div>
+      <div class="lchead sub"><b>Pin size</b></div><div class="psl"><i class="d1"></i><input type="range" id="pscale" min="0.6" max="2.6" step="0.05" value="${PS()}" aria-label="Pin size"><i class="d2"></i></div>`;
+    const sl=card.querySelector('#pscale');sl.oninput=()=>{PREF.pscale=+sl.value;markers.forEach(m=>{const r=rad(m._n||1);m.setRadius(r);m.setStyle({weight:pinW(r)})})};sl.onchange=()=>{savePref();render()}};
   const open=o=>{card.hidden=!o;btn.setAttribute('aria-expanded',String(o));if(o)draw()};
   btn.onclick=e=>{e.preventDefault();e.stopPropagation();open(card.hidden)};
   card.onclick=e=>{e.stopPropagation();const t=e.target.closest('[data-map]');if(t){PREF.map=t.dataset.map;savePref();applyAll();draw();return}
