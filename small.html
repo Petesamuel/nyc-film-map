@@ -831,6 +831,18 @@ html[data-theme=dark] .leaflet-tooltip{background:var(--paper);color:var(--ink);
 .heatbtn.on{background:var(--ink)!important;color:var(--paper)!important}
 .heatbtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}
 html[data-theme=dark] .leaflet-container a.leaflet-popup-close-button{color:var(--ink)}
+#layersBtn{position:absolute;z-index:950;right:10px;top:calc(122px + env(safe-area-inset-top));width:44px;height:44px;border-radius:50%;border:0;background:var(--paper);color:var(--ink);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;cursor:pointer}
+#layersBtn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linejoin:round}
+#layersBtn:focus-visible,.lct:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+#layersCard{position:absolute;z-index:960;right:10px;top:calc(172px + env(safe-area-inset-top));width:min(300px,calc(100vw - 20px));background:var(--paper);border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.22);padding:12px 14px 14px}
+.lchead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.lchead b{font-size:15px;font-weight:700}
+.lchead.sub{margin:14px 0 8px}.lchead.sub b{font-size:13px;font-weight:600;color:var(--muted)}
+.lcx{border:0;background:transparent;color:var(--muted);width:30px;height:30px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px}.lcx svg{width:18px;height:18px}
+.lcrow{display:flex;gap:12px}
+.lct{flex:0 0 76px;border:0;background:transparent;padding:0;font:inherit;font-size:12.5px;color:var(--ink);cursor:pointer;text-align:center}
+.lct i{display:block;width:72px;height:72px;margin:0 auto 6px;border-radius:12px;border:2px solid transparent;box-sizing:border-box}
+.lct.on i{border-color:#2b6fd6}.lct.on span{color:#2b6fd6;font-weight:600}
+.heatprev{background:radial-gradient(circle at 40% 45%,#7d0613 0,#e8291c 16%,#ff8a2b 30%,#ffd04d 44%,rgba(255,243,176,.6) 56%,transparent 66%),radial-gradient(circle at 75% 75%,#ff8a2b 0,#ffd04d 14%,transparent 30%),#f6f3ec}
 /* appearance panel */
 .set{padding:6px 20px 24px}
 .set h4{margin:18px 0 8px;font-size:13px;font-weight:600;color:var(--muted)}
@@ -967,9 +979,7 @@ const OSMF=c=>L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZ
 const ESRI=(n,c)=>L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/'+n+'/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:16,className:c||'',attribution:'&copy; Esri, HERE, Garmin, OpenStreetMap'});
 const TILE_STYLES={minimal:ESRI('Canvas/World_Light_Gray_Base'),minimalDark:ESRI('Canvas/World_Dark_Gray_Base'),heatLight:ESRI('Canvas/World_Light_Gray_Base','t-heat'),
   detailed:L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}),detailedDark:OSMF('t-dark'),vintage:OSMF('t-vintage'),
-  satellite:L.layerGroup([L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Imagery &copy; Esri'}),
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,opacity:.9}),
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',{maxZoom:19})])};
+  satellite:L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Imagery &copy; Esri'})};
 const _unusedTiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,opacity:.85,
   attribution:'&copy; OpenStreetMap'});
 const BASE_L=new BaseLayer().addTo(map);
@@ -1281,13 +1291,21 @@ const PAL={
    bld:'#302c26',bldL:'#3a352d',minor:'#3b3730',path:'#34302a',case:'#2b2823',sec:'#4a4236',pri:'#5d4d36',priC:'#3b3226',mw:'#6f5636',mwC:'#43351f',rail:'#4b453c',bound:'#5a5244',text:'#ddd2bf',text2:'#a89d8b',wtext:'#7ea4ad',halo:'#1d1b18'},
  white:{land:'#f8f6f1',res:'#f6f3ec',park:'#e8ede0',park2:'#dde4d2',wood:'#e4eadb',grass:'#e9eee1',water:'#dce7ea',water2:'#cfdde1',sand:'#f2ede1',cem:'#ebeee4',hosp:'#f4ebe7',school:'#f2eee5',aero:'#efece6',
    bld:'#efebe3',bldL:'#e2ddd2',minor:'#ffffff',path:'#ebe6dc',case:'#e4ded2',sec:'#fdf8ee',pri:'#fbf1dc',priC:'#e6dcc7',mw:'#f7e6c6',mwC:'#e0cfae',rail:'#cfc8bb',bound:'#bdb5a7',text:'#6c655b',text2:'#8a8377',wtext:'#7b98a0',halo:'#fbfaf7'}};
+// satellite: aerial photos with only street, place and water names on top (no road lines or icons)
+function satStyle(){const st=JSON.parse(JSON.stringify(GLSTYLE));
+  st.sources.esri={type:'raster',tiles:['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],tileSize:256,maxzoom:19,attribution:'Imagery &copy; Esri'};
+  const keep=st.layers.filter(l=>l.type==='symbol'&&/^(highway-name-(major|minor)|label_|water_name)/.test(l.id));
+  const MZ={'highway-name-major':11,'highway-name-minor':13.5};
+  keep.forEach(l=>{if(MZ[l.id]!==undefined)l.minzoom=MZ[l.id];l.paint=Object.assign({},l.paint,{'text-color':/water/.test(l.id)?'#cfe6ee':'#ffffff','text-halo-color':'rgba(0,0,0,.7)','text-halo-width':1.3,'text-halo-blur':.5});
+    if(/^highway-name/.test(l.id))l.layout['text-size']=['interpolate',['linear'],['zoom'],11,10,13,11,15,13,17,15]});
+  st.layers=[{id:'sat',type:'raster',source:'esri'}].concat(keep);return st}
 let GLBASE=null,GLSTYLE=null,GLKEY=null,glLoading=null;
 function loadGL(){if(glLoading)return glLoading;glLoading=new Promise((ok,no)=>{
   const css=document.createElement('link');css.rel='stylesheet';css.href='https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css';document.head.appendChild(css);
   const a=document.createElement('script');a.src='https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js';a.onerror=no;a.onload=()=>{
     const b=document.createElement('script');b.src='https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.0.22/leaflet-maplibre-gl.js';b.onerror=no;b.onload=()=>{
       fetch('https://tiles.openfreemap.org/styles/liberty').then(r=>r.json()).then(j=>{GLSTYLE=j;ok()}).catch(no)};document.head.appendChild(b)};document.head.appendChild(a)});return glLoading}
-function glStyle(pal,minimal){const P=PAL[pal],st=JSON.parse(JSON.stringify(GLSTYLE));
+function glStyle(pal,minimal){if(pal==='sat')return satStyle();const P=PAL[pal],st=JSON.parse(JSON.stringify(GLSTYLE));
   st.layers=st.layers.filter(l=>l.id!=='natural_earth'&&l.type!=='fill-extrusion'&&!(minimal&&/^(poi_|road_one_way|highway-shield|road_shield)/.test(l.id)));
   // label timing like Google Maps (map zoom here is one step below the page zoom): avenues from the borough view, local streets from the neighborhood view
   const MZ={'highway-name-major':11,'highway-name-minor':13,'highway-name-path':14.5,poi_r1:14,poi_r7:15,poi_r20:16},TS=['interpolate',['linear'],['zoom'],11,10,13,11,15,13,17,15];
@@ -1306,7 +1324,7 @@ function glStyle(pal,minimal){const P=PAL[pal],st=JSON.parse(JSON.stringify(GLST
     else if(l.type==='symbol'&&l.layout&&l.layout['text-field']){p['text-color']=/water/.test(id)?P.wtext:/^poi|highway-name-path/.test(id)?P.text2:P.text;p['text-halo-color']=P.halo;p['text-halo-width']=1.4}}
   return st}
 let baseTiles=null,glTimer=null;
-function setStyle(k){const GLK={minimal:['light',1],minimalDark:['dark',1],detailed:['light',0],detailedDark:['dark',0],heatLight:['white',1]}[k];
+function setStyle(k){const GLK={minimal:['light',1],minimalDark:['dark',1],detailed:['light',0],detailedDark:['dark',0],heatLight:['white',1],satellite:['sat',1]}[k];
   const raster=()=>{if(GLBASE&&map.hasLayer(GLBASE))map.removeLayer(GLBASE);if(baseTiles&&baseTiles!==TILE_STYLES[k]){map.removeLayer(baseTiles);baseTiles=null}if(TILE_STYLES[k]&&!baseTiles)baseTiles=TILE_STYLES[k].addTo(map)};
   if(!GLK){GLKEY=null;raster();return}
   if(!baseTiles&&!(GLBASE&&map.hasLayer(GLBASE)))raster(); // show the raster map until the vector map is ready
@@ -1336,8 +1354,6 @@ function appearHTML(){
   <p class="hint">Heat map shows where the most photos were taken, on a plain white map. Pins appear on top when you zoom in to street level.</p>
   <h4>Theme</h4>${seg('theme',[['light','Light'],['dark','Dark'],['auto','Automatic']])}
   <p class="hint">Automatic follows your device's light or dark setting.</p>
-  <h4>Map</h4><div class="maps">${maps.map(([v,n])=>`<button class="mapopt${PREF.map===v?' on':''}" data-pref="map" data-v="${v}" aria-pressed="${PREF.map===v}"><i class="${v==='vintage'?'t-vintage':''}" style="background:${PV[v]} center/cover"></i>${n}</button>`).join('')}</div>
-  <p class="hint">Minimal shows streets and their names. Detailed adds places, transit and landmarks. Both use soft atlas colors and switch to a dark version in dark theme.</p>
   <h4>Pin size</h4>${seg('pins',[['s','Small'],['m','Medium'],['l','Large']])}
   <div class="pv" aria-hidden="true">${pv}</div>
   <h4>Show pins</h4>${seg('show',[['always','Always'],['zoom','Zoomed in'],['close','Up close']])}
@@ -1353,6 +1369,23 @@ const HeatBtn=L.Control.extend({options:{position:'bottomright'},onAdd(){const d
   this._a=a;a.classList.toggle('on',PREF.view==='heat');
   L.DomEvent.on(a,'click',e=>{L.DomEvent.preventDefault(e);PREF.view=PREF.view==='heat'?'pins':'heat';savePref();applyAll();toast(PREF.view==='heat'?'Heat map on':'Heat map off')});L.DomEvent.disableClickPropagation(d);return d}});
 const HEATBTN=new HeatBtn().addTo(map);
+// map type picker in the corner, like Google Maps
+(function(){const btn=document.createElement('button');btn.id='layersBtn';btn.setAttribute('aria-label','Map type');btn.setAttribute('aria-expanded','false');
+  btn.innerHTML='<svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>';
+  const card=document.createElement('div');card.id='layersCard';card.hidden=true;card.setAttribute('role','dialog');card.setAttribute('aria-label','Map type');
+  document.getElementById('map').parentNode.appendChild(btn);document.getElementById('map').parentNode.appendChild(card);
+  const draw=()=>{const P=PAL[isDark()?'dark':'light'];
+    const sv=(det)=>`url(data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'><rect width='80' height='80' fill='${P.land}'/><path d='M58 0h22v80H46z' fill='${P.water}'/><rect x='8' y='46' width='22' height='18' rx='2' fill='${P.park}'/><g stroke='${P.case}' stroke-width='5'><path d='M0 34h58M0 72h52M34 0v80'/></g><g stroke='${P.minor}' stroke-width='3.5'><path d='M0 34h58M0 72h52M34 0v80'/></g>${det?`<path d='M0 12L64 62' stroke='${P.priC}' stroke-width='7'/><path d='M0 12L64 62' stroke='${P.pri}' stroke-width='5'/><circle cx='18' cy='20' r='3.5' fill='#c8794a'/><circle cx='48' cy='50' r='3.5' fill='#5b8fb0'/>`:''}</svg>`).replace(/'/g,'%27')})`;
+    const T={minimal:sv(0),detailed:sv(1),satellite:'url(https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/15/12318/9650)'};
+    const cur=PREF.map;
+    card.innerHTML=`<div class="lchead"><b>Map type</b><button class="lcx" aria-label="Close">${IC.close||'×'}</button></div><div class="lcrow">${[['minimal','Minimal'],['detailed','Detailed'],['satellite','Satellite']].map(([v,n])=>`<button class="lct${cur===v?' on':''}" data-map="${v}" aria-pressed="${cur===v}"><i style="background:${T[v]} center/cover"></i><span>${n}</span></button>`).join('')}</div>
+      <div class="lchead sub"><b>Map details</b></div><div class="lcrow"><button class="lct${PREF.view==='heat'?' on':''}" data-heat aria-pressed="${PREF.view==='heat'}"><i class="heatprev"></i><span>Heat map</span></button></div>`};
+  const open=o=>{card.hidden=!o;btn.setAttribute('aria-expanded',String(o));if(o)draw()};
+  btn.onclick=e=>{e.stopPropagation();open(card.hidden)};
+  card.onclick=e=>{e.stopPropagation();const t=e.target.closest('[data-map]');if(t){PREF.map=t.dataset.map;savePref();applyAll();draw();return}
+    if(e.target.closest('[data-heat]')){PREF.view=PREF.view==='heat'?'pins':'heat';savePref();applyAll();draw();return}if(e.target.closest('.lcx'))open(false)};
+  map.on('click movestart',()=>open(false));document.addEventListener('keydown',e=>{if(e.key==='Escape')open(false)});
+})();
 
 // ===== filter chips + bottom sheet =====
 const sheet=document.getElementById('sheet'),sbody=sheet.querySelector('.sbody'),sfind=sheet.querySelector('.sfind');
