@@ -818,7 +818,7 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #1d1c
 <div id="top">
   <div class="search">
     <button class="ico" id="menuBtn" aria-label="Open menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
-    <input id="q" type="search" placeholder="Search films, streets or photos" autocomplete="off">
+    <input id="q" type="search" enterkeyhint="search" placeholder="Search films, streets, photos or an address" autocomplete="off">
     <button class="ico" id="clearQ" aria-label="Clear search" hidden><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
   <div class="chips" id="chips">
@@ -1214,6 +1214,15 @@ function syncChips(){const v=id=>document.getElementById(id).value;
   {const b=document.querySelector('.chip[data-open="dec"]'),ks=[...DECSEL].sort();b.classList.toggle('on',ks.length>0);b.querySelector('span').textContent=!ks.length?'Decade':ks.length===1?(ks[0]==='u'?'Year unknown':DECADES[+ks[0]][2]):`${ks.length} decades`}
   document.getElementById('resetF').hidden=!(v('kind')||v('src')||v('film')||DECSEL.size||document.getElementById('q').value)}
 const qIn=document.getElementById('q');qIn.addEventListener('input',()=>{document.getElementById('clearQ').hidden=!qIn.value;syncChips()});
+// Enter: go to an address (NYC address lookup), otherwise zoom to what the search matched
+async function goAddress(q){try{const r=await fetch('https://geosearch.planninglabs.nyc/v2/search?size=1&text='+encodeURIComponent(q));const d=await r.json();const f=d.features&&d.features[0];if(!f)return false;
+  const ll=[f.geometry.coordinates[1],f.geometry.coordinates[0]];if(!(ll[0]>40.45&&ll[0]<41)||!(ll[1]>-74.3&&ll[1]<-73.65))return false;
+  qIn.value='';document.getElementById('clearQ').hidden=true;render();syncChips();map.setView(ll,17);dropMark(ll,(f.properties.label||q).replace(/, USA$/,'').replace(/, NY$/,''));qIn.blur();return true}catch(e){return false}}
+qIn.addEventListener('keydown',async e=>{if(e.key!=='Enter')return;e.preventDefault();const q=qIn.value.trim();if(!q)return;
+  clearTimeout(t);render();
+  const looksAddr=/^\d+[a-z]?(-\d+)?\s+\S/i.test(q)||/\s(&|and|at)\s/i.test(q)||/\b(st|street|ave|avenue|blvd|boulevard|road|rd|place|pl|drive|dr|lane|ln|parkway|pkwy|square|sq)\.?$/i.test(q);
+  if(looksAddr||!markers.length){toast('Finding '+q+'…');if(await goAddress(q))return}
+  if(markers.length){map.fitBounds(L.latLngBounds(markers.map(m=>m.getLatLng())),{maxZoom:17,padding:[40,40]});qIn.blur()}else toast('Nothing found for "'+q+'"')});
 document.getElementById('clearQ').onclick=()=>{qIn.value='';document.getElementById('clearQ').hidden=true;render();syncChips()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();closeDrawer()}});
 
