@@ -831,7 +831,7 @@ html[data-theme=dark] .leaflet-tooltip{background:var(--paper);color:var(--ink);
 .heatbtn.on{background:var(--ink)!important;color:var(--paper)!important}
 .heatbtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}
 html[data-theme=dark] .leaflet-container a.leaflet-popup-close-button{color:var(--ink)}
-#layersBtn{position:relative;clear:both;float:right;margin:10px 0 0;width:44px;height:44px;border-radius:12px;border:0;background:var(--paper);color:var(--ink);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:auto}
+#layersBtn{display:flex!important;align-items:center;justify-content:center;color:var(--ink)}
 #layersBtn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linejoin:round}
 #layersBtn:focus-visible,.lct:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 #layersCard{position:absolute;z-index:1001;right:62px;bottom:calc(150px + env(safe-area-inset-bottom));width:min(300px,calc(100vw - 20px));background:var(--paper);border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.22);padding:12px 14px 14px}
@@ -1370,17 +1370,17 @@ const HeatBtn=L.Control.extend({options:{position:'bottomright'},onAdd(){const d
   L.DomEvent.on(a,'click',e=>{L.DomEvent.preventDefault(e);PREF.view=PREF.view==='heat'?'pins':'heat';savePref();applyAll();toast(PREF.view==='heat'?'Heat map on':'Heat map off')});L.DomEvent.disableClickPropagation(d);return d}});
 const HEATBTN=new HeatBtn().addTo(map);
 // map type picker in the corner, like Google Maps
-(function(){const btn=document.createElement('button');btn.id='layersBtn';btn.setAttribute('aria-label','Map type');btn.setAttribute('aria-expanded','false');
+(function(){const wrap=L.DomUtil.create('div','leaflet-bar leaflet-control');const btn=L.DomUtil.create('a','',wrap);btn.href='#';btn.setAttribute('role','button');btn.id='layersBtn';btn.setAttribute('aria-label','Map type');btn.setAttribute('aria-expanded','false');
   btn.innerHTML='<svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>';
   const card=document.createElement('div');card.id='layersCard';card.hidden=true;card.setAttribute('role','dialog');card.setAttribute('aria-label','Map type');
-  const hb=document.querySelector('.heatbtn').parentNode;hb.parentNode.insertBefore(btn,hb.nextSibling);document.getElementById('map').parentNode.appendChild(card);
+  const hb=document.querySelector('.heatbtn').parentNode;hb.parentNode.insertBefore(wrap,hb.nextSibling);L.DomEvent.disableClickPropagation(wrap);document.getElementById('map').parentNode.appendChild(card);
   const draw=()=>{const P=PAL[isDark()?'dark':'light'];
     const sv=(det)=>`url(data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'><rect width='80' height='80' fill='${P.land}'/><path d='M58 0h22v80H46z' fill='${P.water}'/><rect x='8' y='46' width='22' height='18' rx='2' fill='${P.park}'/><g stroke='${P.case}' stroke-width='5'><path d='M0 34h58M0 72h52M34 0v80'/></g><g stroke='${P.minor}' stroke-width='3.5'><path d='M0 34h58M0 72h52M34 0v80'/></g>${det?`<path d='M0 12L64 62' stroke='${P.priC}' stroke-width='7'/><path d='M0 12L64 62' stroke='${P.pri}' stroke-width='5'/><circle cx='18' cy='20' r='3.5' fill='#c8794a'/><circle cx='48' cy='50' r='3.5' fill='#5b8fb0'/>`:''}</svg>`).replace(/'/g,'%27')})`;
     const T={minimal:sv(0),detailed:sv(1),satellite:'url(https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/15/12318/9650)'};
     const cur=PREF.map;
     card.innerHTML=`<div class="lchead"><b>Map type</b><button class="lcx" aria-label="Close">${IC.close||'×'}</button></div><div class="lcrow">${[['minimal','Minimal'],['detailed','Detailed'],['satellite','Satellite']].map(([v,n])=>`<button class="lct${cur===v?' on':''}" data-map="${v}" aria-pressed="${cur===v}"><i style="background:${T[v]} center/cover"></i><span>${n}</span></button>`).join('')}</div>`};
   const open=o=>{card.hidden=!o;btn.setAttribute('aria-expanded',String(o));if(o)draw()};
-  btn.onclick=e=>{e.stopPropagation();open(card.hidden)};
+  btn.onclick=e=>{e.preventDefault();e.stopPropagation();open(card.hidden)};
   card.onclick=e=>{e.stopPropagation();const t=e.target.closest('[data-map]');if(t){PREF.map=t.dataset.map;savePref();applyAll();draw();return}
     if(e.target.closest('[data-heat]')){PREF.view=PREF.view==='heat'?'pins':'heat';savePref();applyAll();draw();return}if(e.target.closest('.lcx'))open(false)};
   map.on('click movestart',()=>open(false));document.addEventListener('keydown',e=>{if(e.key==='Escape')open(false)});
