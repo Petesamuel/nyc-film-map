@@ -1003,12 +1003,17 @@ const layer=L.layerGroup().addTo(map);
 let markers=[];
 let SHOTS=[];
 const SHOWZ_OF={zoom:13,close:15};const showZ=()=>SHOWZ_OF[PREF.show]||0;const PIN_R={s:[1.6,2,2.5,3,3,3.5,4.5],m:[2.5,3.5,4.5,5.5,6.5,6.5,6.5],l:[4,5,6,7,8,8.5,9]};
-function rad(n){const z=map.getZoom(),r=PIN_R[PREF.pins]||PIN_R.m;let b=r[Math.max(0,Math.min(6,z-11))];b=n>3?b+(PREF.pins==='s'?1:2):b;
+let FILT=false,FILTN=0;
+// while filtering, pins get bigger the fewer there are, at every zoom, so results are easy to spot
+function filtR(){const k=PREF.pins==='s'?.8:PREF.pins==='l'?1.2:1;return k*(FILTN<=30?9:FILTN<=200?7.5:FILTN<=1500?6:FILTN<=6000?5:4)}
+function rad(n){const z=map.getZoom(),r=PIN_R[PREF.pins]||PIN_R.m;
+  if(FILT){const b=Math.max(filtR(),r[Math.max(0,Math.min(6,z-11))]);return n>3?b+1.5:b}
+  let b=r[Math.max(0,Math.min(6,z-11))];b=n>3?b+(PREF.pins==='s'?1:2):b;
   // in the zoom-in modes pins start tiny where they first appear and grow to full size over the next few zoom levels
   if(PREF.show!=='always'){const k=z-showZ();if(k<3)b=Math.max(1.2,b*[.25,.45,.7][Math.max(0,k)])}
   return b}
-function pinOp(){if(PREF.show==='always')return .92;const k=map.getZoom()-showZ();return k<=0?.55:k===1?.75:.92}
-function pinW(r){const w=PREF.pins==='s'?.8:PREF.pins==='l'?1.5:1.2;return r?(r<2?0:Math.min(w,Math.max(.4,r*.3))):w}
+function pinOp(){if(FILT)return .95;if(PREF.show==='always')return .92;const k=map.getZoom()-showZ();return k<=0?.55:k===1?.75:.92}
+function pinW(r){if(FILT)return 1.5;const w=PREF.pins==='s'?.8:PREF.pins==='l'?1.5:1.2;return r?(r<2?0:Math.min(w,Math.max(.4,r*.3))):w}
 let lastZ=null;map.on('zoomend',()=>{const z=map.getZoom();if(lb.classList.contains('on')||(lastZ!==null&&(lastZ>=14)===(z>=14)&&z<14&&(PREF.show==='always'||(lastZ>=showZ())===(z>=showZ())))){markers.forEach(m=>{const r=rad(m._n||1);m.setRadius(r);m.setStyle({weight:pinW(r),fillOpacity:pinOp()})})}else{render()}lastZ=z});
 function Y(it){return it.y||FILMS[it.f].y}
 function T(it){return it.t||FILMS[it.f].t}
@@ -1107,7 +1112,8 @@ function render(){
   if(cell){const g=new Map(),out=[];vis.sort((a,b)=>b.list.length-a.list.length).forEach(v=>{const pt=map.project([v.p[0],v.p[1]],z),gx=Math.floor(pt.x/cell),gy=Math.floor(pt.y/cell);let hit=null;
     for(let dx=-1;dx<=1&&!hit;dx++)for(let dy=-1;dy<=1&&!hit;dy++){const arr=g.get((gx+dx)+','+(gy+dy));if(arr)for(const c of arr){if(Math.hypot(c.pt.x-pt.x,c.pt.y-pt.y)<cell){hit=c;break}}}
     if(hit)hit.list=hit.list.concat(v.list);else{const c={p:v.p,pt,list:v.list};out.push(c);const k=gx+','+gy;(g.get(k)||g.set(k,[]).get(k)).push(c)}});groups=out}
-  const showAll=PREF.show==='always'||map.getZoom()>=showZ()||KINDSEL.size>0||q||fi!==''||si!==''||DECSEL.size>0;const hint=document.getElementById('zhint');if(hint)hint.style.display=showAll?'none':'block';
+  FILT=!!(KINDSEL.size>0||q||fi!==''||si!==''||DECSEL.size>0);FILTN=groups.length;
+  const showAll=PREF.show==='always'||map.getZoom()>=showZ()||FILT;const hint=document.getElementById('zhint');if(hint)hint.style.display=showAll?'none':'block';
   groups.forEach(pin=>{const list=pin.list;
     shots+=list.length;
     const ys=list.map(Y).filter(Boolean);const y=ys.length?Math.min(...ys):0;
@@ -1256,6 +1262,7 @@ const Loc=L.Control.extend({options:{position:'bottomright'},onAdd(){const d=L.D
 
 // ===== filter chips + bottom sheet =====
 const sheet=document.getElementById('sheet'),sbody=sheet.querySelector('.sbody'),sfind=sheet.querySelector('.sfind');
+function fitResults(){if(FILT&&markers.length&&markers.length<=600){map.fitBounds(L.latLngBounds(markers.map(m=>m.getLatLng())),{maxZoom:17,padding:[60,40]})}}
 function closeSheet(){sheet.hidden=true;scrim.hidden=!drawer.classList.contains('on')}
 document.getElementById('sheetClose').onclick=closeSheet;
 function counts(field,all){const c={};PINS.forEach(p=>p.x.forEach(it=>{if(!all&&!kindOk(it))return;const k=field(it);c[k]=(c[k]||0)+1}));return c}
@@ -1275,8 +1282,8 @@ function openSheet(which){const selEl=document.getElementById(which);sheet.hidde
     return `<button class="opt${multi?' multi':''}${on?' on':''}" data-v="${esc(o.v)}">${dot}${esc(o.t)}${cnt?`<span class="n">${cnt.toLocaleString()}</span>`:''}${multi?'<span class="cb"></span>':''}</button>`}).join('')||'<p class="empty">No matches.</p>'};
   draw('');sfind.oninput=()=>draw(sfind.value.trim().toLowerCase());
   sbody.onclick=e=>{const b=e.target.closest('.opt');if(!b)return;
-    if(MS){const v=b.dataset.v;if(v==='')MS.clear();else MS.has(v)?MS.delete(v):MS.add(v);render();syncChips();draw('');return}
-    selEl.value=b.dataset.v;selEl.dispatchEvent(new Event('change'));if(which!=='film')render();closeSheet();syncChips()};
+    if(MS){const v=b.dataset.v;if(v==='')MS.clear();else MS.has(v)?MS.delete(v):MS.add(v);render();syncChips();draw('');fitResults();return}
+    selEl.value=b.dataset.v;selEl.dispatchEvent(new Event('change'));if(which!=='film')render();closeSheet();syncChips();setTimeout(fitResults,50)};
 }
 document.getElementById('chips').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;
   if(b.dataset.open)openSheet(b.dataset.open);
@@ -1290,11 +1297,17 @@ const qIn=document.getElementById('q');qIn.addEventListener('input',()=>{documen
 // Enter: go to an address (NYC address lookup), otherwise zoom to what the search matched
 async function goAddress(q){try{const r=await fetch('https://geosearch.planninglabs.nyc/v2/search?size=1&text='+encodeURIComponent(q));const d=await r.json();const f=d.features&&d.features[0];if(!f)return false;
   const ll=[f.geometry.coordinates[1],f.geometry.coordinates[0]];if(!(ll[0]>40.45&&ll[0]<41)||!(ll[1]>-74.3&&ll[1]<-73.65))return false;
-  qIn.value='';document.getElementById('clearQ').hidden=true;render();syncChips();map.setView(ll,17);dropMark(ll,(f.properties.label||q).replace(/, USA$/,'').replace(/, NY$/,''));qIn.blur();return true}catch(e){return false}}
+  qIn.value='';document.getElementById('clearQ').hidden=true;render();syncChips();map.setView(ll,18);dropMark(ll,(f.properties.label||q).replace(/, USA$/,'').replace(/, NY$/,''));qIn.blur();setTimeout(()=>openNearest(ll),450);return true}catch(e){return false}}
+// open the pin at a searched place; if there's none right there, say how far the nearest photos are
+function openNearest(ll){let best=null,bd=1e9;markers.forEach(m=>{const d=map.distance(m.getLatLng(),ll);if(d<bd){bd=d;best=m}});
+  if(best&&bd<=60){if(!map.hasLayer(best))best.addTo(layer);best.openPopup()}
+  else if(best&&bd<=400){toast('No photos at this address. Nearest: '+Math.round(bd)+' m away')}
+  else toast('No photos near this address yet')}
 qIn.addEventListener('keydown',async e=>{if(e.key!=='Enter')return;e.preventDefault();const q=qIn.value.trim();if(!q)return;
   clearTimeout(t);render();
   const looksAddr=/^\d+[a-z]?(-\d+)?\s+\S/i.test(q)||/\s(&|and|at)\s/i.test(q)||/\b(st|street|ave|avenue|blvd|boulevard|road|rd|place|pl|drive|dr|lane|ln|parkway|pkwy|square|sq)\.?$/i.test(q);
   if(looksAddr||!markers.length){toast('Finding '+q+'…');if(await goAddress(q))return}
+  if(markers.length===1){map.setView(markers[0].getLatLng(),18);qIn.blur();setTimeout(()=>{if(!map.hasLayer(markers[0]))markers[0].addTo(layer);markers[0].openPopup()},450);return}
   if(markers.length){map.fitBounds(L.latLngBounds(markers.map(m=>m.getLatLng())),{maxZoom:17,padding:[40,40]});qIn.blur()}else toast('Nothing found for "'+q+'"')});
 document.getElementById('clearQ').onclick=()=>{qIn.value='';document.getElementById('clearQ').hidden=true;render();syncChips()};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeSheet();closeDrawer()}});
