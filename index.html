@@ -1288,6 +1288,9 @@ function loadGL(){if(glLoading)return glLoading;glLoading=new Promise((ok,no)=>{
       fetch('https://tiles.openfreemap.org/styles/liberty').then(r=>r.json()).then(j=>{GLSTYLE=j;ok()}).catch(no)};document.head.appendChild(b)};document.head.appendChild(a)});return glLoading}
 function glStyle(pal,minimal){const P=PAL[pal],st=JSON.parse(JSON.stringify(GLSTYLE));
   st.layers=st.layers.filter(l=>l.id!=='natural_earth'&&l.type!=='fill-extrusion'&&!(minimal&&/^(poi_|road_one_way|highway-shield|road_shield)/.test(l.id)));
+  // label timing like Google Maps (map zoom here is one step below the page zoom): avenues from the borough view, local streets from the neighborhood view
+  const MZ={'highway-name-major':11,'highway-name-minor':13,'highway-name-path':14.5,poi_r1:14,poi_r7:15,poi_r20:16},TS=['interpolate',['linear'],['zoom'],11,10,13,11,15,13,17,15];
+  for(const l of st.layers){if(MZ[l.id]!==undefined)l.minzoom=MZ[l.id];if(/^highway-name/.test(l.id)){l.layout['text-size']=TS;l.layout['symbol-spacing']=220}}
   for(const l of st.layers){const id=l.id,p=l.paint=l.paint||{};
     if(l.type==='background')p['background-color']=P.land;
     else if(l.type==='fill'){const c=id==='water'?P.water:/park/.test(id)?P.park:/wood/.test(id)?P.wood:/grass|pitch|track/.test(id)?P.grass:/residential/.test(id)?P.res:/sand|ice/.test(id)?P.sand:/cemetery|wetland/.test(id)?P.cem:/hospital/.test(id)?P.hosp:/school/.test(id)?P.school:/aeroway/.test(id)?P.aero:/building/.test(id)?P.bld:/road_area/.test(id)?P.path:null;
