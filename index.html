@@ -761,6 +761,43 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #1d1c
 .pop .nav button{width:38px!important;height:38px;min-height:0!important;padding:0!important;border-radius:50%!important;border:1px solid var(--line)!important;background:var(--paper);display:grid;place-items:center;cursor:pointer}
 .pop .nav button svg{width:18px;height:18px;fill:none;stroke:var(--ink);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
 .pop .nav span{flex:1;text-align:center;font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap}.pop .nav span small{display:block;font-weight:400;color:var(--muted);font-size:11.5px}
+
+/* gallery */
+.tw{position:relative}
+.gbtn{position:absolute;right:10px;bottom:10px;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px 0 10px;border-radius:16px;border:0;background:rgba(20,20,20,.62);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:#fff;font:600 12.5px Figtree,sans-serif;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.gbtn:hover{background:rgba(20,20,20,.78)}.gbtn svg{width:15px;height:15px;fill:currentColor;pointer-events:none}
+#gal{position:fixed;inset:0;z-index:3600;background:var(--paper);color:var(--ink);display:flex;flex-direction:column;opacity:0;visibility:hidden;transform:translateY(16px);transition:opacity .2s ease,transform .24s cubic-bezier(.2,.8,.2,1),visibility 0s linear .24s}
+#gal.on{opacity:1;visibility:visible;transform:none;transition:opacity .2s ease,transform .24s cubic-bezier(.2,.8,.2,1)}
+.ghead{display:flex;align-items:center;gap:12px;padding:calc(10px + env(safe-area-inset-top)) 14px 10px;border-bottom:1px solid var(--line);background:var(--glass);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+.gx{width:38px;height:38px;flex:none;border-radius:50%;border:0;background:var(--soft);display:grid;place-items:center;cursor:pointer;color:var(--ink)}
+.gx svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.gt{flex:1;min-width:0}.gt b{display:block;font-size:15.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.gt small{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.gseg{display:flex;flex:none;padding:3px;border-radius:12px;background:var(--soft)}
+.gseg button{width:36px;height:30px;border:0;border-radius:9px;background:none;display:grid;place-items:center;cursor:pointer;color:var(--muted)}
+.gseg button.on{background:var(--paper);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14)}
+.gseg svg{width:16px;height:16px;fill:currentColor;pointer-events:none}
+.gchips{display:flex;gap:8px;padding:10px 14px 2px;overflow-x:auto;scrollbar-width:none}.gchips::-webkit-scrollbar{display:none}
+.gchip{flex:none;height:32px;padding:0 14px;border-radius:16px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font:600 13px Figtree,sans-serif;cursor:pointer}
+.gchip.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.gchip small{font-weight:500;opacity:.65;margin-left:4px}
+.gbody{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:6px 14px calc(24px + env(safe-area-inset-bottom))}
+.gsec h3{font-size:13.5px;font-weight:700;margin:14px 2px 8px;display:flex;justify-content:space-between;gap:8px}.gsec h3 span{color:var(--muted);font-weight:500}
+.ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px;max-width:1280px}
+#gal.large .ggrid{grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr));gap:12px}
+.gt1{position:relative;aspect-ratio:1;border:0;padding:0;border-radius:6px;overflow:hidden;background:var(--soft);cursor:pointer;display:block;width:100%}
+.ggrid .gt1:first-child{border-top-left-radius:12px}
+#gal.large .gt1{aspect-ratio:4/3;border-radius:12px}
+.gt1 img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s ease,opacity .25s;opacity:0}
+.gt1 img.ok{opacity:1}
+.gt1:hover img{transform:scale(1.04)}
+.gt1:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.gt1 .gb{position:absolute;left:0;right:0;bottom:0;padding:18px 8px 6px;background:linear-gradient(transparent,rgba(0,0,0,.62));color:#fff;font-size:11.5px;font-weight:600;text-align:left;display:flex;gap:6px;align-items:flex-end;pointer-events:none}
+.gt1 .gb i{font-style:normal;font-weight:500;opacity:.85;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#gal:not(.large) .gt1 .gb i{display:none}
+.gt1 .gk{position:absolute;top:6px;left:6px;height:20px;padding:0 7px;border-radius:10px;background:rgba(20,20,20,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#fff;font-size:10.5px;font-weight:700;line-height:20px;pointer-events:none}
+.gt1 .gn{position:absolute;inset:0;display:grid;place-items:center;padding:10px;font-size:11.5px;color:var(--muted);text-align:center}
+@media (max-width:520px){.ggrid{grid-template-columns:repeat(3,1fr);gap:3px}.gt1{border-radius:4px}.gbody{padding:4px 8px 24px}.gsec h3{margin:12px 6px 8px}}
+@media (prefers-reduced-motion:reduce){#gal,.gt1 img{transition:none}}
 /* drawer */
 #scrim{position:fixed;inset:0;background:rgba(29,28,26,.32);z-index:2900}
 #drawer{position:fixed;top:0;bottom:0;left:0;width:min(340px,86vw);background:var(--paper);z-index:3000;transform:translateX(-102%);transition:transform .22s ease;display:flex;flex-direction:column;box-shadow:var(--shadow);padding-top:env(safe-area-inset-top)}
@@ -889,6 +926,13 @@ html[data-theme=dark] .sc button.on{background:#44444a}
 </div>
 <div id="zhint" style="display:none;position:absolute;z-index:900;left:50%;bottom:calc(52px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--paper);font-size:13px;font-weight:600;padding:7px 14px;border-radius:16px;box-shadow:var(--shadow);pointer-events:none;white-space:nowrap">Zoom in to see photos</div><div id="count"></div>
 <div id="map"></div>
+</div>
+<div id="gal" role="dialog" aria-modal="true" aria-label="All photos at this pin">
+  <div class="ghead"><button class="gx" aria-label="Close gallery"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <div class="gt"><b></b><small></small></div>
+    <div class="gseg" role="group" aria-label="Gallery layout"><button data-gv="grid" aria-label="Grid"><svg viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" rx="1.3"/><rect x="9" y="1" width="6" height="6" rx="1.3"/><rect x="1" y="9" width="6" height="6" rx="1.3"/><rect x="9" y="9" width="6" height="6" rx="1.3"/></svg></button><button data-gv="large" aria-label="Large photos"><svg viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="6" rx="1.3"/><rect x="1" y="9" width="14" height="6" rx="1.3"/></svg></button></div></div>
+  <div class="gchips"></div>
+  <div class="gbody"></div>
 </div>
 <div id="lb" role="dialog" aria-modal="true">
   <div class="stage"><button class="x" aria-label="Close">&times;</button><img alt=""><div class="noimg" hidden></div></div>
@@ -1038,10 +1082,11 @@ function imgFb(el,orig){if(el.dataset.fb)return false;el.dataset.fb=1;if(el.src!
 function normAddr(l){const parts=l.split(/\s*&\s*/);if(parts.length>1)return parts.map(normAddr).sort().join(' & ');return l.toLowerCase().replace(/[.,']/g,'').replace(/\bstreet\b/g,'st').replace(/\bavenue\b/g,'ave').replace(/\bplace\b/g,'pl').replace(/\beast\b/g,'e').replace(/\bwest\b/g,'w').replace(/(\d+)(st|nd|rd|th)\b/g,'$1').replace(/\s+/g,' ').trim()}
 function makeTabs(list){const m=new Map();list.forEach(it=>{const k=normAddr(it.l);if(!m.has(k))m.set(k,{label:it.l,items:[]});m.get(k).items.push(it)});return [...m.values()].sort((a,b)=>b.items.length-a.items.length)}
 let OPENPOP=null,RET=null;function popFit(){const p=OPENPOP;if(p&&p.isOpen()&&p._container){p._updateLayout();p._updatePosition();p._adjustPan()}}
+const GBTN=n=>`<button class="gbtn" data-g="1" aria-label="See all ${n} photos in a grid"><svg viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" rx="1.3"/><rect x="9" y="1" width="6" height="6" rx="1.3"/><rect x="1" y="9" width="6" height="6" rx="1.3"/><rect x="9" y="9" width="6" height="6" rx="1.3"/></svg>${n} photos</button>`;
 function popupHTML(st){
   const list=st.items,idx=st.i,it=list[idx],f=FILMS[it.f],src=SOURCES[it.s];
   return `<div class="pop">
-    ${it.i?`<img class="thumb ld" data-lb="1" src="${esc(imgUrl(it.i,1100))}" alt="" onload="this.classList.remove('ld');popFit()" data-o="${esc(it.i)}" onerror="if(!imgFb(this,this.dataset.o)){this.replaceWith(Object.assign(document.createElement('div'),{className:'thumbx',textContent:'This photo could not load. Use the link below to see it on the source site.'}));popFit()}">`:''}
+    ${it.i?`<div class="tw"><img class="thumb ld" data-lb="1" src="${esc(imgUrl(it.i,1100))}" alt="" onload="this.classList.remove('ld');popFit()" data-o="${esc(it.i)}" onerror="if(!imgFb(this,this.dataset.o)){this.replaceWith(Object.assign(document.createElement('div'),{className:'thumbx',textContent:'This photo could not load. Use the link below to see it on the source site.'}));popFit()}">${list.length>1?GBTN(list.length):''}</div>`:(list.length>1?`<div class="tw" style="height:44px">${GBTN(list.length)}</div>`:'')}
     <div class="body">
       <div class="film">${esc(T(it))}</div>
       <div class="scene">${it.h?esc(f.t)+(it.y?' · '+it.y:'')+' · ':''}${it.c?'Scene: '+esc(it.c)+' · ':''}via ${esc(src)}</div>
@@ -1051,6 +1096,34 @@ function popupHTML(st){
       ${list.length>1?`<div class="nav"><button data-d="-1" aria-label="Previous shot"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button><span>${idx+1} of ${list.length}${st.n>1?`<small>${st.n} addresses here</small>`:''}</span><button data-d="1" aria-label="Next shot"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button></div>`:''}
     </div></div>`;
 }
+
+// ---- Gallery: every photo at one pin, as a grid
+const gal=document.getElementById('gal');let GST=null,GPOP=null,GKIND='all';
+const kindOf=it=>it.k==='d'?'doc':it.h?'hist':'film';
+const KIND_L={all:'All',film:'Film stills',hist:'Historic photos',doc:'Documents'};
+function galView(v){if(v)PREF.gview=v;const cur=PREF.gview||'grid';gal.classList.toggle('large',cur==='large');gal.querySelectorAll('[data-gv]').forEach(b=>{b.classList.toggle('on',b.dataset.gv===cur);b.setAttribute('aria-pressed',b.dataset.gv===cur)});if(v){try{savePref&&savePref()}catch(e){try{localStorage.setItem('nycmap.prefs',JSON.stringify(PREF))}catch(_){}}}}
+function openGal(st,pop){GST=st;GPOP=pop;GKIND='all';
+  const tabs=makeTabs(st.items),cnt={all:st.items.length,film:0,hist:0,doc:0};st.items.forEach(it=>cnt[kindOf(it)]++);
+  gal.querySelector('.gt b').textContent=tabs.length>1?`${tabs.length} addresses`:tabs[0].label;
+  gal.querySelector('.gt small').textContent=`${st.items.length} photos`;
+  const ks=['all','film','hist','doc'].filter(k=>cnt[k]);
+  gal.querySelector('.gchips').innerHTML=ks.length>2?ks.map(k=>`<button class="gchip${k==='all'?' on':''}" data-gk="${k}">${KIND_L[k]}<small>${cnt[k]}</small></button>`).join(''):'';
+  gal.querySelector('.gchips').style.display=ks.length>2?'':'none';
+  galView();galRender();gal.classList.add('on');document.body.style.overflow='hidden';
+  setTimeout(()=>gal.querySelector('.gx').focus(),50)}
+function galRender(){const st=GST,tabs=makeTabs(st.items),multi=tabs.length>1,mixed=GKIND==='all'&&new Set(st.items.map(kindOf)).size>1,big=PREF.gview==='large';
+  const tile=it=>{const k=st.items.indexOf(it),y=Y(it),kd=kindOf(it);
+    return `<button class="gt1" data-gi="${k}" aria-label="${esc(T(it))}${y?', '+y:''}">${it.i?`<img loading="lazy" decoding="async" alt="" src="${esc(imgUrl(it.i,(PREF.gview==='large'?900:420)))}" data-o="${esc(it.i)}" onload="this.classList.add('ok')" onerror="if(!imgFb(this,this.dataset.o)){this.remove()}">`:''}<div class="gn" ${it.i?'style="z-index:-1"':''}>${it.i?'':'No preview'}</div>${mixed&&kd==='film'?`<span class="gk">Film</span>`:mixed&&kd==='doc'?`<span class="gk">Doc</span>`:''}<span class="gb">${y&&!(big&&kd==='film')?`<b>${y}</b>`:''}<i>${esc(T(it))}</i></span></button>`};
+  gal.querySelector('.gbody').innerHTML=tabs.map(tb=>{const its=tb.items.filter(it=>GKIND==='all'||kindOf(it)===GKIND);if(!its.length)return '';
+    return `<section class="gsec">${multi?`<h3>${esc(tb.label)}<span>${its.length}</span></h3>`:''}<div class="ggrid">${its.map(tile).join('')}</div></section>`}).join('');
+  if(!multi)gal.querySelector('.gbody').style.paddingTop='12px';gal.querySelector('.gbody').scrollTop=0}
+function closeGal(){gal.classList.remove('on');document.body.style.overflow='';GST=null}
+gal.querySelector('.gx').onclick=closeGal;
+gal.querySelector('.gseg').onclick=e=>{const b=e.target.closest('[data-gv]');if(b){galView(b.dataset.gv);galRender()}};
+gal.querySelector('.gchips').onclick=e=>{const b=e.target.closest('[data-gk]');if(!b)return;GKIND=b.dataset.gk;gal.querySelectorAll('.gchip').forEach(c=>c.classList.toggle('on',c===b));galRender()};
+gal.querySelector('.gbody').onclick=e=>{const b=e.target.closest('[data-gi]');if(!b||!GST)return;const st=GST,pop=GPOP;st.i=+b.dataset.gi;closeGal();
+  if(pop&&pop.isOpen()){pop.setContent(popupHTML(st));setTimeout(popFit,0)}};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&gal.classList.contains('on')){e.stopImmediatePropagation();closeGal()}},true);
 const layer=L.layerGroup().addTo(map);
 let markers=[];
 let SHOTS=[];
@@ -1177,8 +1250,9 @@ function render(){
     m.bindPopup(()=>st.items.every(it=>it._p._ok)?popupHTML(st):'<div class="pop"><div class="thumb ld" style="width:100%;height:240px"></div><div class="meta"><div class="scene">Loading photos…</div></div></div>',{maxWidth:600,minWidth:260,autoPanPaddingTopLeft:[12,124],autoPanPaddingBottomRight:[12,24],className:'wide'});
     m.on('popupopen',e=>{OPENPOP=e.popup;if(!st.items.every(it=>it._p._ok))needAll(st.items).then(()=>{if(e.popup.isOpen())e.popup.setContent(popupHTML(st))});const el=e.popup.getElement();
       let sw=null;el.ontouchstart=ev=>{if(ev.touches.length===1&&ev.target.closest('.thumb'))sw={x:ev.touches[0].clientX,y:ev.touches[0].clientY};else sw=null};
-      el.ontouchend=ev=>{if(!sw)return;const dx=ev.changedTouches[0].clientX-sw.x,dy=ev.changedTouches[0].clientY-sw.y;sw=null;if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)*1.3&&st.items.length>1){ev.preventDefault();st.i=(st.i+(dx<0?1:-1)+st.items.length)%st.items.length;el._swiped=Date.now();setTimeout(()=>e.popup.setContent(popupHTML(st)),0)}};L.DomEvent.disableClickPropagation(el);L.DomEvent.disableScrollPropagation(el);el.onclick=ev=>{const t=ev.target.closest&&ev.target.closest('[data-lb],[data-d],[data-t],[data-like],[data-save],[data-share]');if(!t)return;if(t.dataset.like!==undefined||t.dataset.save!==undefined||t.dataset.share!==undefined){ev.preventDefault();ev.stopPropagation();doAct(t,st.items[st.i],pin.p);return}ev.preventDefault();ev.stopPropagation();
+      el.ontouchend=ev=>{if(!sw)return;const dx=ev.changedTouches[0].clientX-sw.x,dy=ev.changedTouches[0].clientY-sw.y;sw=null;if(Math.abs(dx)>40&&Math.abs(dx)>Math.abs(dy)*1.3&&st.items.length>1){ev.preventDefault();st.i=(st.i+(dx<0?1:-1)+st.items.length)%st.items.length;el._swiped=Date.now();setTimeout(()=>e.popup.setContent(popupHTML(st)),0)}};L.DomEvent.disableClickPropagation(el);L.DomEvent.disableScrollPropagation(el);el.onclick=ev=>{const t=ev.target.closest&&ev.target.closest('[data-g],[data-lb],[data-d],[data-t],[data-like],[data-save],[data-share]');if(!t)return;if(t.dataset.like!==undefined||t.dataset.save!==undefined||t.dataset.share!==undefined){ev.preventDefault();ev.stopPropagation();doAct(t,st.items[st.i],pin.p);return}ev.preventDefault();ev.stopPropagation();
       const items=st.items;
+      if(t.dataset.g){openGal(st,e.popup);return}
       if(t.dataset.lb){if(el._swiped&&Date.now()-el._swiped<500)return;openLB(items[st.i]);return}
       st.i=(st.i+Number(t.dataset.d)+items.length)%items.length;
       setTimeout(()=>e.popup.setContent(popupHTML(st)),0)}});
