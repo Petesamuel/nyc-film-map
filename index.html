@@ -921,7 +921,7 @@ function dec(a){const o=[];let x=0,y=0;for(let i=0;i<a.length;i+=2){x+=a[i];y+=a
 
 const map=L.map('map',{preferCanvas:true,zoomControl:false,minZoom:3,maxZoom:19}).setView([40.745,-73.975],12);
 // ===== appearance settings =====
-const PREF_DEF={theme:'auto',map:'detailed',pins:'m',show:'zoom',view:'pins'};
+const PREF_DEF={theme:'auto',map:'detailed',pins:'s',show:'zoom',view:'pins'};
 const PREF=(()=>{let p={};try{p=JSON.parse(localStorage.getItem('nycmap.prefs'))||{}}catch(e){}
   if(!p.map){try{const o=JSON.parse(localStorage.getItem('nycmap.style'));if(o)p.map=o==='streets'?'standard':o}catch(e){}}
   const MIG={vintage:'detailed',auto:'detailed',standard:'detailed',dark:'detailed',light:'minimal',simple:'minimal',streets:'detailed'};if(MIG[p.map])p.map=MIG[p.map];
@@ -1054,15 +1054,16 @@ let SHOTS=[];
 const SHOWZ_OF={zoom:10,close:14};const showZ=()=>SHOWZ_OF[PREF.show]||0;const PIN_R={s:[1.6,2,2.5,3,3,3.5,4.5],m:[2.5,3.5,4.5,5.5,6.5,6.5,6.5],l:[4,5,6,7,8,8.5,9]};
 let FILT=false,FILTN=0;
 // while filtering, pins get bigger the fewer there are, at every zoom, so results are easy to spot
-function filtR(){const k=PREF.pins==='s'?.8:PREF.pins==='l'?1.2:1;return k*(FILTN<=30?9:FILTN<=200?7.5:FILTN<=1500?6:FILTN<=6000?5:4)}
+// only a short list of results gets bigger pins; a filter that still leaves lots of pins keeps the normal size
+const BIGN=400;function filtR(){const k=PREF.pins==='s'?.8:PREF.pins==='l'?1.2:1;return k*(FILTN<=30?8:FILTN<=100?6.5:FILTN<=400?5.2:4.2)}
 function rad(n){const z=map.getZoom(),r=PIN_R[PREF.pins]||PIN_R.m;
-  if(FILT){const b=Math.max(filtR(),r[Math.max(0,Math.min(6,z-11))]);return n>3?b+1.5:b}
+  if(FILT&&FILTN<=BIGN){const b=Math.max(filtR(),r[Math.max(0,Math.min(6,z-11))]);return n>3?b+1.5:b}
   let b=r[Math.max(0,Math.min(6,z-11))];b=n>3?b+(PREF.pins==='s'?1:2):b;
   // in the zoom-in modes pins start tiny where they first appear and grow to full size over the next few zoom levels
   if(PREF.show!=='always'){const k=z-showZ(),G=PREF.show==='zoom'?[.22,.26,.32,.45,.65,.85]:[.3,.5,.75];if(k<G.length)b=Math.max(1,b*G[Math.max(0,k)])}
   return b}
-function pinOp(){if(FILT)return .95;if(PREF.show==='always')return .92;const k=map.getZoom()-showZ();return k<=1?.6:k<=3?.75:.92}
-function pinW(r){if(FILT)return 1.5;const w=PREF.pins==='s'?.8:PREF.pins==='l'?1.5:1.2;return r?(r<2.2||(PREF.show!=='always'&&map.getZoom()-showZ()<=2)?0:Math.min(w,Math.max(.4,r*.3))):w}
+function pinOp(){if(FILT&&FILTN<=BIGN)return .95;if(PREF.show==='always')return .92;const k=map.getZoom()-showZ();return k<=1?.6:k<=3?.75:.92}
+function pinW(r){if(FILT&&FILTN<=BIGN)return PREF.pins==='s'?1:1.5;const w=PREF.pins==='s'?.8:PREF.pins==='l'?1.5:1.2;return r?(r<2.2||(PREF.show!=='always'&&map.getZoom()-showZ()<=2)?0:Math.min(w,Math.max(.4,r*.3))):w}
 let lastZ=null;map.on('zoomend',()=>{const z=map.getZoom();if(lb.classList.contains('on')||(lastZ!==null&&(lastZ>=14)===(z>=14)&&z<14&&(PREF.show==='always'||(lastZ>=showZ())===(z>=showZ())))){markers.forEach(m=>{const r=rad(m._n||1);m.setRadius(r);m.setStyle({weight:pinW(r),fillOpacity:pinOp()})})}else{render()}lastZ=z});
 function Y(it){return it.y||FILMS[it.f].y}
 function T(it){return it.t||FILMS[it.f].t}
