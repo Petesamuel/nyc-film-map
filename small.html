@@ -1003,10 +1003,14 @@ function popupHTML(st){
 const layer=L.layerGroup().addTo(map);
 let markers=[];
 let SHOTS=[];
-const SHOWZ_OF={zoom:15,close:17};const showZ=()=>SHOWZ_OF[PREF.show]||0;const PIN_R={s:[1.6,2,2.5,3,3,3.5,4.5],m:[2.5,3.5,4.5,5.5,6.5,6.5,6.5],l:[4,5,6,7,8,8.5,9]};
-function rad(n){const z=map.getZoom(),r=PIN_R[PREF.pins]||PIN_R.m,b=r[Math.max(0,Math.min(6,z-11))];return n>3?b+(PREF.pins==='s'?1:2):b}
-function pinW(){return PREF.pins==='s'?.8:PREF.pins==='l'?1.5:1.2}
-let lastZ=null;map.on('zoomend',()=>{const z=map.getZoom();if(lb.classList.contains('on')||(lastZ!==null&&(lastZ>=14)===(z>=14)&&z<14&&(PREF.show==='always'||(lastZ>=showZ())===(z>=showZ())))){markers.forEach(m=>m.setRadius(rad(m._n||1)))}else{render()}lastZ=z});
+const SHOWZ_OF={zoom:13,close:15};const showZ=()=>SHOWZ_OF[PREF.show]||0;const PIN_R={s:[1.6,2,2.5,3,3,3.5,4.5],m:[2.5,3.5,4.5,5.5,6.5,6.5,6.5],l:[4,5,6,7,8,8.5,9]};
+function rad(n){const z=map.getZoom(),r=PIN_R[PREF.pins]||PIN_R.m;let b=r[Math.max(0,Math.min(6,z-11))];b=n>3?b+(PREF.pins==='s'?1:2):b;
+  // in the zoom-in modes pins start tiny where they first appear and grow to full size over the next few zoom levels
+  if(PREF.show!=='always'){const k=z-showZ();if(k<3)b=Math.max(1.2,b*[.25,.45,.7][Math.max(0,k)])}
+  return b}
+function pinOp(){if(PREF.show==='always')return .92;const k=map.getZoom()-showZ();return k<=0?.55:k===1?.75:.92}
+function pinW(r){const w=PREF.pins==='s'?.8:PREF.pins==='l'?1.5:1.2;return r?(r<2?0:Math.min(w,Math.max(.4,r*.3))):w}
+let lastZ=null;map.on('zoomend',()=>{const z=map.getZoom();if(lb.classList.contains('on')||(lastZ!==null&&(lastZ>=14)===(z>=14)&&z<14&&(PREF.show==='always'||(lastZ>=showZ())===(z>=showZ())))){markers.forEach(m=>{const r=rad(m._n||1);m.setRadius(r);m.setStyle({weight:pinW(r),fillOpacity:pinOp()})})}else{render()}lastZ=z});
 function Y(it){return it.y||FILMS[it.f].y}
 function T(it){return it.t||FILMS[it.f].t}
 let DECSEL=new Set();
@@ -1108,7 +1112,7 @@ function render(){
   groups.forEach(pin=>{const list=pin.list;
     shots+=list.length;
     const ys=list.map(Y).filter(Boolean);const y=ys.length?Math.min(...ys):0;
-    const m=L.circleMarker([pin.p[0],pin.p[1]],{radius:rad(list.length),weight:pinW(),color:'#16130f',fillColor:colorFor(y),fillOpacity:.92});
+    const m=L.circleMarker([pin.p[0],pin.p[1]],{radius:rad(list.length),weight:pinW(rad(list.length)),color:'#16130f',fillColor:colorFor(y),fillOpacity:pinOp()});
     const tabs=makeTabs(list),st={items:tabs.flatMap(tb=>tb.items),n:tabs.length,i:0};m._st=st;m.on('popupopen',()=>addRecent(st.items[0],pin.p));
     m.bindPopup(()=>st.items.every(it=>it._p._ok)?popupHTML(st):'<div class="pop"><div class="thumb ld" style="width:100%;height:240px"></div><div class="meta"><div class="scene">Loading photos…</div></div></div>',{maxWidth:600,minWidth:260,autoPanPaddingTopLeft:[12,124],autoPanPaddingBottomRight:[12,24],className:'wide'});
     m.on('popupopen',e=>{OPENPOP=e.popup;if(!st.items.every(it=>it._p._ok))needAll(st.items).then(()=>{if(e.popup.isOpen())e.popup.setContent(popupHTML(st))});const el=e.popup.getElement();
@@ -1243,7 +1247,7 @@ function appearHTML(){
   <h4>Pin size</h4>${seg('pins',[['s','Small'],['m','Medium'],['l','Large']])}
   <div class="pv" aria-hidden="true">${pv}</div>
   <h4>Show pins</h4>${seg('show',[['always','Always'],['zoom','Zoomed in'],['close','Up close']])}
-  <p class="hint">Zoomed in hides pins until you're at neighborhood level. Up close hides them until you're down to a few blocks. Searches and filters always show their pins.</p>
+  <p class="hint">Zoomed in shows pins from neighborhood level, Up close from a few blocks. They start as small dots and grow as you zoom in. Searches and filters always show their pins.</p>
   <button class="btn ghost reset" data-resetpref>Reset to defaults</button></div>`}
 
 // ===== map controls: zoom + locate =====
