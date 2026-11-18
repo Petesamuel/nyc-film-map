@@ -1003,10 +1003,10 @@ function popupHTML(st){
 const layer=L.layerGroup().addTo(map);
 let markers=[];
 let SHOTS=[];
-const SHOWZ=15;const PIN_R={s:[1.6,2,2.5,3,3,3.5,4.5],m:[2.5,3.5,4.5,5.5,6.5,6.5,6.5],l:[4,5,6,7,8,8.5,9]};
+const SHOWZ_OF={zoom:15,close:17};const showZ=()=>SHOWZ_OF[PREF.show]||0;const PIN_R={s:[1.6,2,2.5,3,3,3.5,4.5],m:[2.5,3.5,4.5,5.5,6.5,6.5,6.5],l:[4,5,6,7,8,8.5,9]};
 function rad(n){const z=map.getZoom(),r=PIN_R[PREF.pins]||PIN_R.m,b=r[Math.max(0,Math.min(6,z-11))];return n>3?b+(PREF.pins==='s'?1:2):b}
 function pinW(){return PREF.pins==='s'?.8:PREF.pins==='l'?1.5:1.2}
-let lastZ=null;map.on('zoomend',()=>{const z=map.getZoom();if(lb.classList.contains('on')||(lastZ!==null&&(lastZ>=14)===(z>=14)&&z<14&&(PREF.show!=='zoom'||(lastZ>=SHOWZ)===(z>=SHOWZ)))){markers.forEach(m=>m.setRadius(rad(m._n||1)))}else{render()}lastZ=z});
+let lastZ=null;map.on('zoomend',()=>{const z=map.getZoom();if(lb.classList.contains('on')||(lastZ!==null&&(lastZ>=14)===(z>=14)&&z<14&&(PREF.show==='always'||(lastZ>=showZ())===(z>=showZ())))){markers.forEach(m=>m.setRadius(rad(m._n||1)))}else{render()}lastZ=z});
 function Y(it){return it.y||FILMS[it.f].y}
 function T(it){return it.t||FILMS[it.f].t}
 let DECSEL=new Set();
@@ -1104,7 +1104,7 @@ function render(){
   if(cell){const g=new Map(),out=[];vis.sort((a,b)=>b.list.length-a.list.length).forEach(v=>{const pt=map.project([v.p[0],v.p[1]],z),gx=Math.floor(pt.x/cell),gy=Math.floor(pt.y/cell);let hit=null;
     for(let dx=-1;dx<=1&&!hit;dx++)for(let dy=-1;dy<=1&&!hit;dy++){const arr=g.get((gx+dx)+','+(gy+dy));if(arr)for(const c of arr){if(Math.hypot(c.pt.x-pt.x,c.pt.y-pt.y)<cell){hit=c;break}}}
     if(hit)hit.list=hit.list.concat(v.list);else{const c={p:v.p,pt,list:v.list};out.push(c);const k=gx+','+gy;(g.get(k)||g.set(k,[]).get(k)).push(c)}});groups=out}
-  const showAll=PREF.show!=='zoom'||map.getZoom()>=SHOWZ||kv!==''||q||fi!==''||si!==''||DECSEL.size>0;const hint=document.getElementById('zhint');if(hint)hint.style.display=showAll?'none':'block';
+  const showAll=PREF.show==='always'||map.getZoom()>=showZ()||kv!==''||q||fi!==''||si!==''||DECSEL.size>0;const hint=document.getElementById('zhint');if(hint)hint.style.display=showAll?'none':'block';
   groups.forEach(pin=>{const list=pin.list;
     shots+=list.length;
     const ys=list.map(Y).filter(Boolean);const y=ys.length?Math.min(...ys):0;
@@ -1242,8 +1242,8 @@ function appearHTML(){
   <p class="hint">Automatic uses the standard map in light theme and the dark map in dark theme. Simple draws only the street grid, so it loads fastest.</p>
   <h4>Pin size</h4>${seg('pins',[['s','Small'],['m','Medium'],['l','Large']])}
   <div class="pv" aria-hidden="true">${pv}</div>
-  <h4>Show pins</h4>${seg('show',[['always','Always'],['zoom','When zoomed in']])}
-  <p class="hint">When zoomed in keeps the city view clear and shows pins at street level. Searches and filters always show their pins.</p>
+  <h4>Show pins</h4>${seg('show',[['always','Always'],['zoom','Zoomed in'],['close','Up close']])}
+  <p class="hint">Zoomed in hides pins until you're at neighborhood level. Up close hides them until you're down to a few blocks. Searches and filters always show their pins.</p>
   <button class="btn ghost reset" data-resetpref>Reset to defaults</button></div>`}
 
 // ===== map controls: zoom + locate =====
