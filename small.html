@@ -903,7 +903,7 @@ html[data-theme=dark] .sc button.on{background:#44444a}
 </style>
 <script>window.PREF_OVERRIDE={pins:'s',show:'zoom'};</script>
 <script>/* reload once when a newer version of the map is live (GitHub Pages caches pages for 10 minutes) */
-window.BUILD='1795031201';(function(){try{fetch('ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=v.trim();if(v&&v!==window.BUILD&&sessionStorage.getItem('nycmap.rl')!==v){sessionStorage.setItem('nycmap.rl',v);location.reload()}}).catch(()=>{})}catch(e){}})();</script>
+window.BUILD='1795033527';(function(){try{fetch('ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=v.trim();if(v&&v!==window.BUILD&&sessionStorage.getItem('nycmap.rl')!==v){sessionStorage.setItem('nycmap.rl',v);location.reload()}}).catch(()=>{})}catch(e){}})();</script>
 </head>
 <body>
 <div id="app">
@@ -1086,13 +1086,15 @@ function normAddr(l){const parts=l.split(/\s*&\s*/);if(parts.length>1)return par
 function makeTabs(list){const m=new Map();list.forEach(it=>{const k=normAddr(it.l);if(!m.has(k))m.set(k,{label:it.l,items:[]});m.get(k).items.push(it)});return [...m.values()].sort((a,b)=>b.items.length-a.items.length)}
 let OPENPOP=null,RET=null;function popFit(){const p=OPENPOP;if(p&&p.isOpen()&&p._container){p._updateLayout();p._updatePosition();p._adjustPan()}}
 const GBTN=n=>`<button class="gbtn" data-g="1" aria-label="See all ${n} photos in a grid"><svg viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" rx="1.3"/><rect x="9" y="1" width="6" height="6" rx="1.3"/><rect x="1" y="9" width="6" height="6" rx="1.3"/><rect x="9" y="9" width="6" height="6" rx="1.3"/></svg>${n} photos</button>`;
+// credit lines some archives ask for, shown instead of "via ..."
+const CREDIT={'NYC Landmarks Preservation Commission':'Image courtesy of the NYC Landmarks Preservation Commission','Museum of the City of New York':'Courtesy Museum of the City of New York'};
 function popupHTML(st){
   const list=st.items,idx=st.i,it=list[idx],f=FILMS[it.f],src=SOURCES[it.s];
   return `<div class="pop">
     ${it.i?`<div class="tw"><img class="thumb ld" data-lb="1" src="${esc(imgUrl(it.i,1100))}" alt="" onload="this.classList.remove('ld');popFit()" data-o="${esc(it.i)}" onerror="if(!imgFb(this,this.dataset.o)){this.replaceWith(Object.assign(document.createElement('div'),{className:'thumbx',textContent:'This photo could not load. Use the link below to see it on the source site.'}));popFit()}">${list.length>1?GBTN(list.length):''}</div>`:(list.length>1?`<div class="tw" style="height:44px">${GBTN(list.length)}</div>`:'')}
     <div class="body">
       <div class="film">${esc(T(it))}</div>
-      <div class="scene">${it.h?esc(f.t)+(it.y?' · '+it.y:'')+' · ':''}${it.c?'Scene: '+esc(it.c)+' · ':''}via ${esc(src)}</div>
+      <div class="scene">${it.h?esc(f.t)+(it.y?' · '+it.y:'')+' · ':''}${it.c?'Scene: '+esc(it.c)+' · ':''}${esc(CREDIT[src]||'via '+src)}</div>
       <div class="addr">${esc(it.l)}</div>
       ${actsHTML(it)}
       <a class="go" href="${esc(it.u)}" target="_blank" rel="noopener">See it on ${esc(src)}</a>
@@ -1169,7 +1171,7 @@ function showLB(){
   lbImg.dataset.fb='';lbImg.onerror=()=>{if(imgFb(lbImg,it.i))return;lbImg.style.display='none';lbNo.hidden=false;lbNo.innerHTML=`This viewer blocks photos from other websites, so the image can't load here.<br><br>Open the downloaded map file in your browser to see photos, or <a href="${esc(it.u)}" target="_blank" rel="noopener">view it on ${esc(SOURCES[it.s])}</a>.`};
   zReset(false);lbImg.src=imgUrl(it.i,1400);
   lb.querySelector('.t').textContent=T(it);
-  lb.querySelector('.m').textContent=it.l+(it.h?' · '+f.t+(it.y?' · '+it.y:''):'')+(it.c?' · '+it.c:'')+' · via '+SOURCES[it.s];
+  lb.querySelector('.m').textContent=it.l+(it.h?' · '+f.t+(it.y?' · '+it.y:''):'')+(it.c?' · '+it.c:'')+' · '+(CREDIT[SOURCES[it.s]]||'via '+SOURCES[it.s]);
   lb.querySelector('.row a').href=it.u;lb.querySelector('.lbacts').innerHTML=actsHTML(it,true);
   lb.querySelector('.count').textContent=pos===0?'Next = nearby shots':`${pos+1} of ${seq.length} · nearest first`;
   lb.querySelector('[data-n="-1"]').disabled=pos===0;lb.querySelector('[data-n="1"]').disabled=pos>=seq.length-1;
