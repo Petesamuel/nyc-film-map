@@ -831,10 +831,10 @@ html[data-theme=dark] .leaflet-tooltip{background:var(--paper);color:var(--ink);
 .heatbtn.on{background:var(--ink)!important;color:var(--paper)!important}
 .heatbtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}
 html[data-theme=dark] .leaflet-container a.leaflet-popup-close-button{color:var(--ink)}
-#layersBtn{position:absolute;z-index:950;right:10px;top:calc(122px + env(safe-area-inset-top));width:44px;height:44px;border-radius:50%;border:0;background:var(--paper);color:var(--ink);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;cursor:pointer}
+#layersBtn{position:relative;clear:both;float:right;margin:10px 0 0;width:44px;height:44px;border-radius:12px;border:0;background:var(--paper);color:var(--ink);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:auto}
 #layersBtn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linejoin:round}
 #layersBtn:focus-visible,.lct:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
-#layersCard{position:absolute;z-index:960;right:10px;top:calc(172px + env(safe-area-inset-top));width:min(300px,calc(100vw - 20px));background:var(--paper);border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.22);padding:12px 14px 14px}
+#layersCard{position:absolute;z-index:1001;right:62px;bottom:calc(150px + env(safe-area-inset-bottom));width:min(300px,calc(100vw - 20px));background:var(--paper);border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.22);padding:12px 14px 14px}
 .lchead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.lchead b{font-size:15px;font-weight:700}
 .lchead.sub{margin:14px 0 8px}.lchead.sub b{font-size:13px;font-weight:600;color:var(--muted)}
 .lcx{border:0;background:transparent;color:var(--muted);width:30px;height:30px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px}.lcx svg{width:18px;height:18px}
@@ -998,23 +998,23 @@ const HeatLayer=L.Layer.extend({
     L.DomUtil.setPosition(c,m.containerPointToLayerPoint([0,0]));c.width=sz.x;c.height=sz.y;c.style.width=sz.x+'px';c.style.height=sz.y+'px';
     // add up photos on a coarse grid, then color each cell by how it compares with the busiest spots on screen
     const z=m.getZoom(),S=4,W=Math.ceil(sz.x/S),H=Math.ceil(sz.y/S),grid=new Float32Array(W*H);
-    const rpx=Math.max(9,Math.min(42,11*Math.pow(1.3,z-11))),R=Math.max(2,Math.round(rpx/S)),ker=[];
+    const rpx=Math.max(12,Math.min(50,14*Math.pow(1.3,z-11))),R=Math.max(2,Math.round(rpx/S)),ker=[];
     for(let dy=-R;dy<=R;dy++)for(let dx=-R;dx<=R;dx++){const d=Math.hypot(dx,dy)/R;if(d<1)ker.push(dx,dy,(1-d*d)*(1-d*d))}
     const b=m.getBounds().pad(.2);
     for(const p of this._pts){if(!b.contains(p))continue;const q=m.latLngToContainerPoint(p),gx=Math.round(q.x/S),gy=Math.round(q.y/S),w=Math.sqrt(p[2]);
       for(let i=0;i<ker.length;i+=3){const x=gx+ker[i],y=gy+ker[i+1];if(x<0||y<0||x>=W||y>=H)continue;grid[y*W+x]+=w*ker[i+2]}}
     const nz=[];for(let i=0;i<grid.length;i+=3)if(grid[i]>0)nz.push(grid[i]);
     if(!nz.length){c.getContext('2d').clearRect(0,0,sz.x,sz.y);return}
-    nz.sort((x,y)=>x-y);const top=nz[Math.floor(nz.length*.992)]||nz[nz.length-1];
+    nz.sort((x,y)=>x-y);const top=nz[Math.floor(nz.length*.95)]||nz[nz.length-1];
     const off=document.createElement('canvas');off.width=W;off.height=H;const og=off.getContext('2d'),img=og.createImageData(W,H),d=img.data,pal=this._pal();
-    for(let i=0;i<grid.length;i++){const v=grid[i];if(!v)continue;const t=Math.min(1,Math.pow(v/top,.85)),j=Math.round(t*255)*4,o=i*4;
-      d[o]=pal[j];d[o+1]=pal[j+1];d[o+2]=pal[j+2];d[o+3]=Math.round(Math.min(1,.08+t*1.05)*210)}
-    og.putImageData(img,0,0);c.style.opacity=z>=17?.55:1;const g=c.getContext('2d');g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(off,0,0,W*S,H*S)}
+    for(let i=0;i<grid.length;i++){const v=grid[i];if(!v)continue;const t=Math.min(1,Math.pow(v/top,.5)),j=Math.round(t*255)*4,o=i*4;
+      d[o]=pal[j];d[o+1]=pal[j+1];d[o+2]=pal[j+2];d[o+3]=Math.round(Math.min(1,.3+t*.9)*200)}
+    og.putImageData(img,0,0);c.style.opacity=z>=17?.6:.85;const g=c.getContext('2d');g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(off,0,0,W*S,H*S)}
 });
 const HEAT=new HeatLayer();
 
 const sel=document.getElementById('film');
-const KINDSEL=new Set();const itemKind=it=>!it.h?'f':it.k==='d'?'d':'p';const kindOk=it=>!KINDSEL.size||KINDSEL.has(itemKind(it));
+const SRCSEL=new Set(),FILMSEL=new Set();const KINDSEL=new Set();const itemKind=it=>!it.h?'f':it.k==='d'?'d':'p';const kindOk=it=>!KINDSEL.size||KINDSEL.has(itemKind(it));
 const ds=document.getElementById('dec');DECADES.forEach((d,i)=>{const o=document.createElement('option');o.value=i;o.textContent=d[2];ds.appendChild(o)});{const o=document.createElement('option');o.value='u';o.textContent='Year unknown';ds.appendChild(o)}ds.addEventListener('change',render);
 const ss=document.getElementById('src');SOURCES.forEach((n,i)=>{const o=document.createElement('option');o.value=i;o.textContent=n;ss.appendChild(o)});ss.addEventListener('change',render);
 FILMS.map((f,i)=>[f,i]).sort((a,b)=>a[0].t.localeCompare(b[0].t)).forEach(([f,i])=>{const o=document.createElement('option');o.value=i;o.textContent=f.t;sel.appendChild(o)});
@@ -1052,7 +1052,7 @@ function popupHTML(st){
 const layer=L.layerGroup().addTo(map);
 let markers=[];
 let SHOTS=[];
-const SHOWZ_OF={zoom:13,close:15};const showZ=()=>SHOWZ_OF[PREF.show]||0;const PIN_R={s:[1.6,2,2.5,3,3,3.5,4.5],m:[2.5,3.5,4.5,5.5,6.5,6.5,6.5],l:[4,5,6,7,8,8.5,9]};
+const SHOWZ_OF={zoom:10,close:14};const showZ=()=>SHOWZ_OF[PREF.show]||0;const PIN_R={s:[1.6,2,2.5,3,3,3.5,4.5],m:[2.5,3.5,4.5,5.5,6.5,6.5,6.5],l:[4,5,6,7,8,8.5,9]};
 let FILT=false,FILTN=0;
 // while filtering, pins get bigger the fewer there are, at every zoom, so results are easy to spot
 function filtR(){const k=PREF.pins==='s'?.8:PREF.pins==='l'?1.2:1;return k*(FILTN<=30?9:FILTN<=200?7.5:FILTN<=1500?6:FILTN<=6000?5:4)}
@@ -1060,11 +1060,11 @@ function rad(n){const z=map.getZoom(),r=PIN_R[PREF.pins]||PIN_R.m;
   if(FILT){const b=Math.max(filtR(),r[Math.max(0,Math.min(6,z-11))]);return n>3?b+1.5:b}
   let b=r[Math.max(0,Math.min(6,z-11))];b=n>3?b+(PREF.pins==='s'?1:2):b;
   // in the zoom-in modes pins start tiny where they first appear and grow to full size over the next few zoom levels
-  if(PREF.show!=='always'){const k=z-showZ();if(k<3)b=Math.max(1.2,b*[.25,.45,.7][Math.max(0,k)])}
+  if(PREF.show!=='always'){const k=z-showZ(),G=PREF.show==='zoom'?[.22,.26,.32,.45,.65,.85]:[.3,.5,.75];if(k<G.length)b=Math.max(1,b*G[Math.max(0,k)])}
   return b}
-function pinOp(){if(FILT)return .95;if(PREF.show==='always')return .92;const k=map.getZoom()-showZ();return k<=0?.55:k===1?.75:.92}
-function pinW(r){if(FILT)return 1.5;const w=PREF.pins==='s'?.8:PREF.pins==='l'?1.5:1.2;return r?(r<2?0:Math.min(w,Math.max(.4,r*.3))):w}
-let lastZ=null;map.on('zoomend',()=>{const z=map.getZoom();if(lb.classList.contains('on')||(lastZ!==null&&(lastZ>=14)===(z>=14)&&z<14&&(PREF.show==='always'||(lastZ>=showZ())===(z>=showZ()))&&(PREF.view!=='heat'||(lastZ>=17)===(z>=17)))){markers.forEach(m=>{const r=rad(m._n||1);m.setRadius(r);m.setStyle({weight:pinW(r),fillOpacity:pinOp()})})}else{render()}lastZ=z});
+function pinOp(){if(FILT)return .95;if(PREF.show==='always')return .92;const k=map.getZoom()-showZ();return k<=1?.6:k<=3?.75:.92}
+function pinW(r){if(FILT)return 1.5;const w=PREF.pins==='s'?.8:PREF.pins==='l'?1.5:1.2;return r?(r<2.2||(PREF.show!=='always'&&map.getZoom()-showZ()<=2)?0:Math.min(w,Math.max(.4,r*.3))):w}
+let lastZ=null;map.on('zoomend',()=>{const z=map.getZoom();if(lb.classList.contains('on')||(lastZ!==null&&(lastZ>=14)===(z>=14)&&z<14&&(PREF.show==='always'||(lastZ>=showZ())===(z>=showZ())))){markers.forEach(m=>{const r=rad(m._n||1);m.setRadius(r);m.setStyle({weight:pinW(r),fillOpacity:pinOp()})})}else{render()}lastZ=z});
 function Y(it){return it.y||FILMS[it.f].y}
 function T(it){return it.t||FILMS[it.f].t}
 let DECSEL=new Set();
@@ -1155,16 +1155,16 @@ function render(){
   const kv=document.getElementById('kind').value,dv=DECSEL,q=document.getElementById('q').value.trim().toLowerCase(),fi=sel.value,si=document.getElementById('src').value;
   layer.clearLayers();markers=[];SHOTS=[];let shots=0;
   const bounds=[];
-  const vis=[];PINS.forEach(pin=>{const list=pin.x.filter(it=>kindOk(it)&&decOk(Y(it),dv)&&(fi===''||it.f==fi)&&(si===''||it.s==si)&&(!q||(it.l+' '+(it.c||'')+' '+T(it)+' '+FILMS[it.f].t+' '+SOURCES[it.s]).toLowerCase().includes(q)));
+  const vis=[];PINS.forEach(pin=>{const list=pin.x.filter(it=>kindOk(it)&&decOk(Y(it),dv)&&(!FILMSEL.size||FILMSEL.has(String(it.f)))&&(!SRCSEL.size||SRCSEL.has(String(it.s)))&&(!q||(it.l+' '+(it.c||'')+' '+T(it)+' '+FILMS[it.f].t+' '+SOURCES[it.s]).toLowerCase().includes(q)));
     if(list.length)vis.push({p:pin.p,list})});
   // pins that would overlap on screen at this zoom become one pin (one tab per address)
   const z=map.getZoom(),cell=z>=14?11:0;let groups=vis;
   if(cell){const g=new Map(),out=[];vis.sort((a,b)=>b.list.length-a.list.length).forEach(v=>{const pt=map.project([v.p[0],v.p[1]],z),gx=Math.floor(pt.x/cell),gy=Math.floor(pt.y/cell);let hit=null;
     for(let dx=-1;dx<=1&&!hit;dx++)for(let dy=-1;dy<=1&&!hit;dy++){const arr=g.get((gx+dx)+','+(gy+dy));if(arr)for(const c of arr){if(Math.hypot(c.pt.x-pt.x,c.pt.y-pt.y)<cell){hit=c;break}}}
     if(hit)hit.list=hit.list.concat(v.list);else{const c={p:v.p,pt,list:v.list};out.push(c);const k=gx+','+gy;(g.get(k)||g.set(k,[]).get(k)).push(c)}});groups=out}
-  FILT=!!(KINDSEL.size>0||q||fi!==''||si!==''||DECSEL.size>0);FILTN=groups.length;
+  FILT=!!(KINDSEL.size>0||q||FILMSEL.size>0||SRCSEL.size>0||DECSEL.size>0);FILTN=groups.length;
   const heat=PREF.view==='heat';if(heat){HEAT.setData(vis.map(v=>[v.p[0],v.p[1],v.list.length]));if(!map.hasLayer(HEAT))HEAT.addTo(map)}else if(map.hasLayer(HEAT))map.removeLayer(HEAT);
-  const showAll=heat?map.getZoom()>=17:(PREF.show==='always'||map.getZoom()>=showZ()||FILT);const hint=document.getElementById('zhint');if(hint)hint.style.display=showAll||heat?'none':'block';
+  const showAll=PREF.show==='always'||map.getZoom()>=showZ()||FILT;const hint=document.getElementById('zhint');if(hint)hint.style.display=showAll?'none':'block';
   groups.forEach(pin=>{const list=pin.list;
     shots+=list.length;
     const ys=list.map(Y).filter(Boolean);const y=ys.length?Math.min(...ys):0;
@@ -1351,13 +1351,13 @@ function appearHTML(){
   const r=PIN_R[PREF.pins],pv=[r[3],r[4],r[6]].map((x,i)=>`<b style="width:${x*2}px;height:${x*2}px;background:${['#7e57c2','#2b6fd6','#e0533d'][i]};border-width:${pinW()}px"></b>`).join('');
   return `<div class="set">
   <h4>View</h4>${seg('view',[['pins','Pins'],['heat','Heat map']])}
-  <p class="hint">Heat map shows where the most photos were taken, on a plain white map. Pins appear on top when you zoom in to street level.</p>
+  <p class="hint">Heat map shades the map where the most photos were taken, under the pins, on a plain white map.</p>
   <h4>Theme</h4>${seg('theme',[['light','Light'],['dark','Dark'],['auto','Automatic']])}
   <p class="hint">Automatic follows your device's light or dark setting.</p>
   <h4>Pin size</h4>${seg('pins',[['s','Small'],['m','Medium'],['l','Large']])}
   <div class="pv" aria-hidden="true">${pv}</div>
   <h4>Show pins</h4>${seg('show',[['always','Always'],['zoom','Zoomed in'],['close','Up close']])}
-  <p class="hint">Zoomed in shows pins from neighborhood level, Up close from a few blocks. They start as small dots and grow as you zoom in. Searches and filters always show their pins.</p>
+  <p class="hint">Zoomed in shows small pins from the city view, Up close from a few blocks. They start as small dots and grow as you zoom in. Searches and filters always show their pins.</p>
   <button class="btn ghost reset" data-resetpref>Reset to defaults</button></div>`}
 
 // ===== map controls: zoom + locate =====
@@ -1373,13 +1373,12 @@ const HEATBTN=new HeatBtn().addTo(map);
 (function(){const btn=document.createElement('button');btn.id='layersBtn';btn.setAttribute('aria-label','Map type');btn.setAttribute('aria-expanded','false');
   btn.innerHTML='<svg viewBox="0 0 24 24"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>';
   const card=document.createElement('div');card.id='layersCard';card.hidden=true;card.setAttribute('role','dialog');card.setAttribute('aria-label','Map type');
-  document.getElementById('map').parentNode.appendChild(btn);document.getElementById('map').parentNode.appendChild(card);
+  const hb=document.querySelector('.heatbtn').parentNode;hb.parentNode.insertBefore(btn,hb.nextSibling);document.getElementById('map').parentNode.appendChild(card);
   const draw=()=>{const P=PAL[isDark()?'dark':'light'];
     const sv=(det)=>`url(data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'><rect width='80' height='80' fill='${P.land}'/><path d='M58 0h22v80H46z' fill='${P.water}'/><rect x='8' y='46' width='22' height='18' rx='2' fill='${P.park}'/><g stroke='${P.case}' stroke-width='5'><path d='M0 34h58M0 72h52M34 0v80'/></g><g stroke='${P.minor}' stroke-width='3.5'><path d='M0 34h58M0 72h52M34 0v80'/></g>${det?`<path d='M0 12L64 62' stroke='${P.priC}' stroke-width='7'/><path d='M0 12L64 62' stroke='${P.pri}' stroke-width='5'/><circle cx='18' cy='20' r='3.5' fill='#c8794a'/><circle cx='48' cy='50' r='3.5' fill='#5b8fb0'/>`:''}</svg>`).replace(/'/g,'%27')})`;
     const T={minimal:sv(0),detailed:sv(1),satellite:'url(https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/15/12318/9650)'};
     const cur=PREF.map;
-    card.innerHTML=`<div class="lchead"><b>Map type</b><button class="lcx" aria-label="Close">${IC.close||'×'}</button></div><div class="lcrow">${[['minimal','Minimal'],['detailed','Detailed'],['satellite','Satellite']].map(([v,n])=>`<button class="lct${cur===v?' on':''}" data-map="${v}" aria-pressed="${cur===v}"><i style="background:${T[v]} center/cover"></i><span>${n}</span></button>`).join('')}</div>
-      <div class="lchead sub"><b>Map details</b></div><div class="lcrow"><button class="lct${PREF.view==='heat'?' on':''}" data-heat aria-pressed="${PREF.view==='heat'}"><i class="heatprev"></i><span>Heat map</span></button></div>`};
+    card.innerHTML=`<div class="lchead"><b>Map type</b><button class="lcx" aria-label="Close">${IC.close||'×'}</button></div><div class="lcrow">${[['minimal','Minimal'],['detailed','Detailed'],['satellite','Satellite']].map(([v,n])=>`<button class="lct${cur===v?' on':''}" data-map="${v}" aria-pressed="${cur===v}"><i style="background:${T[v]} center/cover"></i><span>${n}</span></button>`).join('')}</div>`};
   const open=o=>{card.hidden=!o;btn.setAttribute('aria-expanded',String(o));if(o)draw()};
   btn.onclick=e=>{e.stopPropagation();open(card.hidden)};
   card.onclick=e=>{e.stopPropagation();const t=e.target.closest('[data-map]');if(t){PREF.map=t.dataset.map;savePref();applyAll();draw();return}
@@ -1394,7 +1393,7 @@ function closeSheet(){sheet.hidden=true;scrim.hidden=!drawer.classList.contains(
 document.getElementById('sheetClose').onclick=closeSheet;
 function counts(field,all){const c={};PINS.forEach(p=>p.x.forEach(it=>{if(!all&&!kindOk(it))return;const k=field(it);c[k]=(c[k]||0)+1}));return c}
 function openSheet(which){const selEl=document.getElementById(which);sheet.hidden=false;scrim.hidden=false;
-  sheet.querySelector('.shead b').textContent={dec:'Decades',src:'Source',film:'Film',kind:'Type'}[which];sheet.querySelector('.shint').hidden=!(which==='dec'||which==='kind');const MS=which==='dec'?DECSEL:which==='kind'?KINDSEL:null;
+  sheet.querySelector('.shead b').textContent={dec:'Decades',src:'Source',film:'Film',kind:'Type'}[which];sheet.querySelector('.shint').hidden=false;const MS=which==='dec'?DECSEL:which==='kind'?KINDSEL:which==='src'?SRCSEL:which==='film'?FILMSEL:null;
   sfind.hidden=which!=='film';sfind.value='';
   let opts=[...selEl.options].map(o=>({v:o.value,t:o.textContent}));let c={};
   if(which==='src')c=counts(it=>String(it.s));
@@ -1409,17 +1408,19 @@ function openSheet(which){const selEl=document.getElementById(which);sheet.hidde
     return `<button class="opt${multi?' multi':''}${on?' on':''}" data-v="${esc(o.v)}">${dot}${esc(o.t)}${cnt?`<span class="n">${cnt.toLocaleString()}</span>`:''}${multi?'<span class="cb"></span>':''}</button>`}).join('')||'<p class="empty">No matches.</p>'};
   draw('');sfind.oninput=()=>draw(sfind.value.trim().toLowerCase());
   sbody.onclick=e=>{const b=e.target.closest('.opt');if(!b)return;
-    if(MS){const v=b.dataset.v;if(v==='')MS.clear();else MS.has(v)?MS.delete(v):MS.add(v);render();syncChips();draw('');fitResults();return}
+    if(MS){const v=b.dataset.v;if(v==='')MS.clear();else MS.has(v)?MS.delete(v):MS.add(v);const bb=render();syncChips();draw(sfind.value.trim().toLowerCase());
+      if(which==='film'&&MS.size&&bb&&bb.length){const nyc=bb.filter(p=>p[0]>40.4&&p[0]<41.2&&p[1]>-74.4&&p[1]<-73.5);map.fitBounds(L.latLngBounds(nyc.length?nyc:bb).pad(.1),{maxZoom:16})}else fitResults();return}
     selEl.value=b.dataset.v;selEl.dispatchEvent(new Event('change'));if(which!=='film')render();closeSheet();syncChips();setTimeout(fitResults,50)};
 }
 document.getElementById('chips').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;
   if(b.dataset.open)openSheet(b.dataset.open);
-  else if(b.id==='resetF'){['kind','src','film','dec'].forEach(id=>document.getElementById(id).value='');DECSEL.clear();KINDSEL.clear();document.getElementById('q').value='';render();syncChips();document.getElementById('clearQ').hidden=true}};
+  else if(b.id==='resetF'){['kind','src','film','dec'].forEach(id=>document.getElementById(id).value='');DECSEL.clear();KINDSEL.clear();SRCSEL.clear();FILMSEL.clear();document.getElementById('q').value='';render();syncChips();document.getElementById('clearQ').hidden=true}};
 function syncChips(){const v=id=>document.getElementById(id).value;
   {const b=document.querySelector('.chip[data-open="kind"]'),ks=[...KINDSEL],N={f:'Film locations',p:'Historic photos',d:'Documents'};b.classList.toggle('on',ks.length>0);b.querySelector('span').textContent=!ks.length?'Type':ks.length===1?N[ks[0]]:`${ks.length} types`}
-  [['src','Source'],['film','Film']].forEach(([id,label])=>{const b=document.querySelector(`.chip[data-open="${id}"]`),el=document.getElementById(id);b.classList.toggle('on',!!el.value);b.querySelector('span').textContent=el.value?el.options[el.selectedIndex].textContent.replace(/ \(Library of Congress\)| archive$/,''):label});
+  [['src','Source',SRCSEL,'sources',i=>SOURCES[i]],['film','Film',FILMSEL,'films',i=>FILMS[i].t]].forEach(([id,label,S,pl,nm])=>{const b=document.querySelector(`.chip[data-open="${id}"]`),ks=[...S];b.classList.toggle('on',ks.length>0);
+    b.querySelector('span').textContent=!ks.length?label:ks.length===1?String(nm(+ks[0])).replace(/ \(Library of Congress\)| archive$/,'').slice(0,28):`${ks.length} ${pl}`});
   {const b=document.querySelector('.chip[data-open="dec"]'),ks=[...DECSEL].sort();b.classList.toggle('on',ks.length>0);b.querySelector('span').textContent=!ks.length?'Decade':ks.length===1?(ks[0]==='u'?'Year unknown':DECADES[+ks[0]][2]):`${ks.length} decades`}
-  document.getElementById('resetF').hidden=!(KINDSEL.size||v('src')||v('film')||DECSEL.size||document.getElementById('q').value)}
+  document.getElementById('resetF').hidden=!(KINDSEL.size||SRCSEL.size||FILMSEL.size||DECSEL.size||document.getElementById('q').value)}
 const qIn=document.getElementById('q');qIn.addEventListener('input',()=>{document.getElementById('clearQ').hidden=!qIn.value;syncChips()});
 // Enter: go to an address (NYC address lookup), otherwise zoom to what the search matched
 async function goAddress(q){try{const r=await fetch('https://geosearch.planninglabs.nyc/v2/search?size=1&text='+encodeURIComponent(q));const d=await r.json();const f=d.features&&d.features[0];if(!f)return false;
