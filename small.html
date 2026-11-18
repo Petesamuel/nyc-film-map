@@ -1350,8 +1350,6 @@ function appearHTML(){
   const maps=[['minimal','Minimal'],['detailed','Detailed'],['satellite','Satellite']];
   const r=PIN_R[PREF.pins],pv=[r[3],r[4],r[6]].map((x,i)=>`<b style="width:${x*2}px;height:${x*2}px;background:${['#7e57c2','#2b6fd6','#e0533d'][i]};border-width:${pinW()}px"></b>`).join('');
   return `<div class="set">
-  <h4>View</h4>${seg('view',[['pins','Pins'],['heat','Heat map']])}
-  <p class="hint">Heat map shades the map where the most photos were taken, under the pins, on a plain white map.</p>
   <h4>Theme</h4>${seg('theme',[['light','Light'],['dark','Dark'],['auto','Automatic']])}
   <p class="hint">Automatic follows your device's light or dark setting.</p>
   <h4>Pin size</h4>${seg('pins',[['s','Small'],['m','Medium'],['l','Large']])}
