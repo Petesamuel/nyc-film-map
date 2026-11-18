@@ -825,6 +825,9 @@ html[data-theme=dark] .opt.on .cb::after{border-color:var(--paper)}
 html[data-theme=dark] .leaflet-tooltip{background:var(--paper);color:var(--ink);border-color:var(--line)}
 .t-dark{filter:invert(1) hue-rotate(180deg) brightness(.92) contrast(.88) saturate(.6)}
 .t-light{filter:grayscale(.9) brightness(1.06) contrast(.9)}
+.t-white{filter:grayscale(1) brightness(1.16) contrast(.7)}
+.heatbtn.on{background:var(--ink)!important;color:var(--paper)!important}
+.heatbtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}
 html[data-theme=dark] .leaflet-container a.leaflet-popup-close-button{color:var(--ink)}
 /* appearance panel */
 .set{padding:6px 20px 24px}
@@ -905,7 +908,7 @@ function dec(a){const o=[];let x=0,y=0;for(let i=0;i<a.length;i+=2){x+=a[i];y+=a
 
 const map=L.map('map',{preferCanvas:true,zoomControl:false,minZoom:3,maxZoom:19}).setView([40.745,-73.975],12);
 // ===== appearance settings =====
-const PREF_DEF={theme:'auto',map:'auto',pins:'m',show:'zoom'};
+const PREF_DEF={theme:'auto',map:'auto',pins:'m',show:'zoom',view:'pins'};
 const PREF=(()=>{let p={};try{p=JSON.parse(localStorage.getItem('nycmap.prefs'))||{}}catch(e){}
   if(!p.map){try{const o=JSON.parse(localStorage.getItem('nycmap.style'));if(o)p.map=o==='streets'?'standard':o}catch(e){}}
   return Object.assign({},PREF_DEF,window.PREF_OVERRIDE||{},p)})();
@@ -958,10 +961,39 @@ const BaseLayer=L.Layer.extend({
 });
 // Real map tiles load when the page is opened in a normal browser; if blocked, the vector map above shows through.
 const OSMF=c=>L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,className:c,attribution:'&copy; OpenStreetMap'});
-const TILE_STYLES={light:OSMF('t-light'),dark:OSMF('t-dark'),standard:L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}),satellite:L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Imagery &copy; Esri'})};
+const TILE_STYLES={white:OSMF('t-white'),light:OSMF('t-light'),dark:OSMF('t-dark'),standard:L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}),satellite:L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Imagery &copy; Esri'})};
 const _unusedTiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,opacity:.85,
   attribution:'&copy; OpenStreetMap'});
 const BASE_L=new BaseLayer().addTo(map);
+// ===== heat map: where most photos were taken =====
+map.createPane('heatPane').style.zIndex=350;
+const HeatLayer=L.Layer.extend({
+  onAdd(m){this._m=m;this._c=L.DomUtil.create('canvas','');Object.assign(this._c.style,{position:'absolute',pointerEvents:'none'});m.getPane('heatPane').appendChild(this._c);
+    m.on('moveend zoomend resize viewreset',this._draw,this);this._draw()},
+  onRemove(m){this._c.remove();m.off('moveend zoomend resize viewreset',this._draw,this)},
+  setData(pts){this._pts=pts;if(this._m)this._draw()},
+  _sprite(r){if(this._sr===r)return this._sp;const c=document.createElement('canvas'),d=r*2;c.width=c.height=d;const g=c.getContext('2d'),gr=g.createRadialGradient(r,r,0,r,r,r);
+    gr.addColorStop(0,'rgba(0,0,0,1)');gr.addColorStop(.45,'rgba(0,0,0,.55)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,d,d);this._sr=r;this._sp=c;return c},
+  _pal(){if(this._p)return this._p;const c=document.createElement('canvas');c.width=256;c.height=1;const g=c.getContext('2d'),gr=g.createLinearGradient(0,0,256,0);
+    [[0,'#fff3b0'],[.25,'#ffd04d'],[.5,'#ff8a2b'],[.75,'#e8291c'],[1,'#7d0613']].forEach(([o,col])=>gr.addColorStop(o,col));g.fillStyle=gr;g.fillRect(0,0,256,1);this._p=g.getImageData(0,0,256,1).data;return this._p},
+  _draw(){const m=this._m,sz=m.getSize(),c=this._c;if(!this._pts)return;
+    L.DomUtil.setPosition(c,m.containerPointToLayerPoint([0,0]));c.width=sz.x;c.height=sz.y;c.style.width=sz.x+'px';c.style.height=sz.y+'px';
+    // add up photos on a coarse grid, then color each cell by how it compares with the busiest spots on screen
+    const z=m.getZoom(),S=4,W=Math.ceil(sz.x/S),H=Math.ceil(sz.y/S),grid=new Float32Array(W*H);
+    const rpx=Math.max(9,Math.min(42,11*Math.pow(1.3,z-11))),R=Math.max(2,Math.round(rpx/S)),ker=[];
+    for(let dy=-R;dy<=R;dy++)for(let dx=-R;dx<=R;dx++){const d=Math.hypot(dx,dy)/R;if(d<1)ker.push(dx,dy,(1-d*d)*(1-d*d))}
+    const b=m.getBounds().pad(.2);
+    for(const p of this._pts){if(!b.contains(p))continue;const q=m.latLngToContainerPoint(p),gx=Math.round(q.x/S),gy=Math.round(q.y/S),w=Math.sqrt(p[2]);
+      for(let i=0;i<ker.length;i+=3){const x=gx+ker[i],y=gy+ker[i+1];if(x<0||y<0||x>=W||y>=H)continue;grid[y*W+x]+=w*ker[i+2]}}
+    const nz=[];for(let i=0;i<grid.length;i+=3)if(grid[i]>0)nz.push(grid[i]);
+    if(!nz.length){c.getContext('2d').clearRect(0,0,sz.x,sz.y);return}
+    nz.sort((x,y)=>x-y);const top=nz[Math.floor(nz.length*.992)]||nz[nz.length-1];
+    const off=document.createElement('canvas');off.width=W;off.height=H;const og=off.getContext('2d'),img=og.createImageData(W,H),d=img.data,pal=this._pal();
+    for(let i=0;i<grid.length;i++){const v=grid[i];if(!v)continue;const t=Math.min(1,Math.pow(v/top,.85)),j=Math.round(t*255)*4,o=i*4;
+      d[o]=pal[j];d[o+1]=pal[j+1];d[o+2]=pal[j+2];d[o+3]=Math.round(Math.min(1,.08+t*1.05)*210)}
+    og.putImageData(img,0,0);c.style.opacity=z>=17?.55:1;const g=c.getContext('2d');g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high';g.drawImage(off,0,0,W*S,H*S)}
+});
+const HEAT=new HeatLayer();
 
 const sel=document.getElementById('film');
 const KINDSEL=new Set();const itemKind=it=>!it.h?'f':it.k==='d'?'d':'p';const kindOk=it=>!KINDSEL.size||KINDSEL.has(itemKind(it));
@@ -1014,7 +1046,7 @@ function rad(n){const z=map.getZoom(),r=PIN_R[PREF.pins]||PIN_R.m;
   return b}
 function pinOp(){if(FILT)return .95;if(PREF.show==='always')return .92;const k=map.getZoom()-showZ();return k<=0?.55:k===1?.75:.92}
 function pinW(r){if(FILT)return 1.5;const w=PREF.pins==='s'?.8:PREF.pins==='l'?1.5:1.2;return r?(r<2?0:Math.min(w,Math.max(.4,r*.3))):w}
-let lastZ=null;map.on('zoomend',()=>{const z=map.getZoom();if(lb.classList.contains('on')||(lastZ!==null&&(lastZ>=14)===(z>=14)&&z<14&&(PREF.show==='always'||(lastZ>=showZ())===(z>=showZ())))){markers.forEach(m=>{const r=rad(m._n||1);m.setRadius(r);m.setStyle({weight:pinW(r),fillOpacity:pinOp()})})}else{render()}lastZ=z});
+let lastZ=null;map.on('zoomend',()=>{const z=map.getZoom();if(lb.classList.contains('on')||(lastZ!==null&&(lastZ>=14)===(z>=14)&&z<14&&(PREF.show==='always'||(lastZ>=showZ())===(z>=showZ()))&&(PREF.view!=='heat'||(lastZ>=17)===(z>=17)))){markers.forEach(m=>{const r=rad(m._n||1);m.setRadius(r);m.setStyle({weight:pinW(r),fillOpacity:pinOp()})})}else{render()}lastZ=z});
 function Y(it){return it.y||FILMS[it.f].y}
 function T(it){return it.t||FILMS[it.f].t}
 let DECSEL=new Set();
@@ -1113,7 +1145,8 @@ function render(){
     for(let dx=-1;dx<=1&&!hit;dx++)for(let dy=-1;dy<=1&&!hit;dy++){const arr=g.get((gx+dx)+','+(gy+dy));if(arr)for(const c of arr){if(Math.hypot(c.pt.x-pt.x,c.pt.y-pt.y)<cell){hit=c;break}}}
     if(hit)hit.list=hit.list.concat(v.list);else{const c={p:v.p,pt,list:v.list};out.push(c);const k=gx+','+gy;(g.get(k)||g.set(k,[]).get(k)).push(c)}});groups=out}
   FILT=!!(KINDSEL.size>0||q||fi!==''||si!==''||DECSEL.size>0);FILTN=groups.length;
-  const showAll=PREF.show==='always'||map.getZoom()>=showZ()||FILT;const hint=document.getElementById('zhint');if(hint)hint.style.display=showAll?'none':'block';
+  const heat=PREF.view==='heat';if(heat){HEAT.setData(vis.map(v=>[v.p[0],v.p[1],v.list.length]));if(!map.hasLayer(HEAT))HEAT.addTo(map)}else if(map.hasLayer(HEAT))map.removeLayer(HEAT);
+  const showAll=heat?map.getZoom()>=17:(PREF.show==='always'||map.getZoom()>=showZ()||FILT);const hint=document.getElementById('zhint');if(hint)hint.style.display=showAll||heat?'none':'block';
   groups.forEach(pin=>{const list=pin.list;
     shots+=list.length;
     const ys=list.map(Y).filter(Boolean);const y=ys.length?Math.min(...ys):0;
@@ -1233,9 +1266,9 @@ function action(a){
   if(a==='share'){const c=map.getCenter();copy(shareURL([c.lat,c.lng],map.getZoom()),'Link to this view copied')}
 }
 let baseTiles=null;function setStyle(k){if(baseTiles){map.removeLayer(baseTiles);baseTiles=null}if(TILE_STYLES[k]){baseTiles=TILE_STYLES[k].addTo(map)}}
-function mapKey(){return PREF.map==='auto'?(isDark()?'dark':'standard'):PREF.map}
+function mapKey(){if(PREF.view==='heat'&&!isDark())return 'white';return PREF.map==='auto'?(isDark()?'dark':'standard'):PREF.map}
 function savePref(){try{localStorage.setItem('nycmap.prefs',JSON.stringify(PREF))}catch(e){}}
-function applyAll(){applyTheme();setStyle(mapKey());BASE_L._draw();render()}
+function applyAll(){applyTheme();setStyle(mapKey());BASE_L._draw();render();if(typeof HEATBTN!=='undefined'&&HEATBTN._a)HEATBTN._a.classList.toggle('on',PREF.view==='heat')}
 function setPref(k,v){PREF[k]=v;savePref();applyAll();openPanel('appear')}
 if(darkMQ)darkMQ.addEventListener('change',()=>{if(PREF.theme==='auto')applyAll()});
 setStyle(mapKey());
@@ -1245,6 +1278,8 @@ function appearHTML(){
   const maps=[['auto','Automatic'],['standard','Standard'],['light','Light'],['dark','Dark'],['satellite','Satellite'],['simple','Simple']];
   const r=PIN_R[PREF.pins],pv=[r[3],r[4],r[6]].map((x,i)=>`<b style="width:${x*2}px;height:${x*2}px;background:${['#7e57c2','#2b6fd6','#e0533d'][i]};border-width:${pinW()}px"></b>`).join('');
   return `<div class="set">
+  <h4>View</h4>${seg('view',[['pins','Pins'],['heat','Heat map']])}
+  <p class="hint">Heat map shows where the most photos were taken, on a plain white map. Pins appear on top when you zoom in to street level.</p>
   <h4>Theme</h4>${seg('theme',[['light','Light'],['dark','Dark'],['auto','Automatic']])}
   <p class="hint">Automatic follows your device's light or dark setting.</p>
   <h4>Map</h4><div class="maps">${maps.map(([v,n])=>`<button class="mapopt${PREF.map===v?' on':''}" data-pref="map" data-v="${v}" aria-pressed="${PREF.map===v}"><i style="background:${SW[v]}"></i>${n}</button>`).join('')}</div>
@@ -1259,6 +1294,11 @@ function appearHTML(){
 L.control.zoom({position:'bottomright'}).addTo(map);
 const Loc=L.Control.extend({options:{position:'bottomright'},onAdd(){const d=L.DomUtil.create('div','leaflet-bar');const a=L.DomUtil.create('a','locbtn',d);a.href='#';a.title='Show my location';a.setAttribute('role','button');a.innerHTML=IC.loc;
   L.DomEvent.on(a,'click',e=>{L.DomEvent.preventDefault(e);action('near')});L.DomEvent.disableClickPropagation(d);return d}});new Loc().addTo(map);
+const HeatBtn=L.Control.extend({options:{position:'bottomright'},onAdd(){const d=L.DomUtil.create('div','leaflet-bar');const a=L.DomUtil.create('a','heatbtn',d);a.href='#';a.title='Heat map';a.setAttribute('role','button');a.setAttribute('aria-label','Heat map');
+  a.innerHTML='<svg viewBox="0 0 24 24"><path d="M12 22c4 0 7-2.8 7-6.8 0-3.6-2.4-5.8-4.2-8.2-.5 2-1.6 3.2-2.8 3.6C12.6 7 11.4 4.2 9 2c.2 3.6-4 6.4-4 11.6C5 18.6 8 22 12 22z"/></svg>';
+  this._a=a;a.classList.toggle('on',PREF.view==='heat');
+  L.DomEvent.on(a,'click',e=>{L.DomEvent.preventDefault(e);PREF.view=PREF.view==='heat'?'pins':'heat';savePref();applyAll();toast(PREF.view==='heat'?'Heat map on':'Heat map off')});L.DomEvent.disableClickPropagation(d);return d}});
+const HEATBTN=new HeatBtn().addTo(map);
 
 // ===== filter chips + bottom sheet =====
 const sheet=document.getElementById('sheet'),sbody=sheet.querySelector('.sbody'),sfind=sheet.querySelector('.sfind');
