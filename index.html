@@ -826,6 +826,8 @@ html[data-theme=dark] .leaflet-tooltip{background:var(--paper);color:var(--ink);
 .t-dark{filter:invert(1) hue-rotate(180deg) brightness(.92) contrast(.88) saturate(.6)}
 .t-light{filter:grayscale(.9) brightness(1.06) contrast(.9)}
 .t-white{filter:grayscale(1) brightness(1.16) contrast(.7)}
+.t-heat{filter:brightness(1.07) contrast(.85)}
+.t-vintage{filter:sepia(.8) saturate(.75) contrast(.92) brightness(1.02) hue-rotate(-8deg)}
 .heatbtn.on{background:var(--ink)!important;color:var(--paper)!important}
 .heatbtn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}
 html[data-theme=dark] .leaflet-container a.leaflet-popup-close-button{color:var(--ink)}
@@ -839,9 +841,9 @@ html[data-theme=dark] .leaflet-container a.leaflet-popup-close-button{color:var(
 html[data-theme=dark] .sc button.on{background:#44444a}
 .sc button:focus-visible,.mapopt:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .set .hint{margin:8px 2px 0;font-size:12.5px;line-height:1.45;color:var(--muted)}
-.maps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.maps{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .mapopt{border:1.5px solid var(--line);border-radius:10px;background:var(--paper);padding:0 0 6px;cursor:pointer;font:inherit;font-size:12.5px;font-weight:500;color:var(--ink);overflow:hidden}
-.mapopt i{display:block;height:44px;margin-bottom:5px}
+.mapopt i{display:block;height:64px;margin-bottom:6px}
 .mapopt.on{border-color:var(--ink);font-weight:700}
 .pv{display:flex;align-items:center;justify-content:center;gap:18px;height:44px;margin-top:10px;border-radius:10px;background:var(--soft)}
 .pv b{display:block;border-radius:50%;border:1px solid #16130f}
@@ -907,9 +909,10 @@ function dec(a){const o=[];let x=0,y=0;for(let i=0;i<a.length;i+=2){x+=a[i];y+=a
 
 const map=L.map('map',{preferCanvas:true,zoomControl:false,minZoom:3,maxZoom:19}).setView([40.745,-73.975],12);
 // ===== appearance settings =====
-const PREF_DEF={theme:'auto',map:'auto',pins:'m',show:'zoom',view:'pins'};
+const PREF_DEF={theme:'auto',map:'detailed',pins:'m',show:'zoom',view:'pins'};
 const PREF=(()=>{let p={};try{p=JSON.parse(localStorage.getItem('nycmap.prefs'))||{}}catch(e){}
   if(!p.map){try{const o=JSON.parse(localStorage.getItem('nycmap.style'));if(o)p.map=o==='streets'?'standard':o}catch(e){}}
+  const MIG={auto:'detailed',standard:'detailed',dark:'detailed',light:'minimal',simple:'minimal',streets:'detailed'};if(MIG[p.map])p.map=MIG[p.map];
   return Object.assign({},PREF_DEF,window.PREF_OVERRIDE||{},p)})();
 const darkMQ=window.matchMedia?matchMedia('(prefers-color-scheme: dark)'):null;
 function isDark(){return PREF.theme==='dark'||(PREF.theme==='auto'&&darkMQ&&darkMQ.matches)}
@@ -960,7 +963,10 @@ const BaseLayer=L.Layer.extend({
 });
 // Real map tiles load when the page is opened in a normal browser; if blocked, the vector map above shows through.
 const OSMF=c=>L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,className:c,attribution:'&copy; OpenStreetMap'});
-const TILE_STYLES={white:OSMF('t-white'),light:OSMF('t-light'),dark:OSMF('t-dark'),standard:L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}),satellite:L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Imagery &copy; Esri'})};
+const ESRI=(n,c)=>L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/'+n+'/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:16,className:c||'',attribution:'&copy; Esri, HERE, Garmin, OpenStreetMap'});
+const TILE_STYLES={minimal:ESRI('Canvas/World_Light_Gray_Base'),minimalDark:ESRI('Canvas/World_Dark_Gray_Base'),heatLight:ESRI('Canvas/World_Light_Gray_Base','t-heat'),
+  detailed:L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}),detailedDark:OSMF('t-dark'),vintage:OSMF('t-vintage'),
+  satellite:L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Imagery &copy; Esri'})};
 const _unusedTiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,opacity:.85,
   attribution:'&copy; OpenStreetMap'});
 const BASE_L=new BaseLayer().addTo(map);
@@ -1265,7 +1271,8 @@ function action(a){
   if(a==='share'){const c=map.getCenter();copy(shareURL([c.lat,c.lng],map.getZoom()),'Link to this view copied')}
 }
 let baseTiles=null;function setStyle(k){if(baseTiles){map.removeLayer(baseTiles);baseTiles=null}if(TILE_STYLES[k]){baseTiles=TILE_STYLES[k].addTo(map)}}
-function mapKey(){if(PREF.view==='heat'&&!isDark())return 'white';return PREF.map==='auto'?(isDark()?'dark':'standard'):PREF.map}
+function mapKey(){const d=isDark();if(PREF.view==='heat')return d?'minimalDark':'heatLight';
+  if(PREF.map==='minimal')return d?'minimalDark':'minimal';if(PREF.map==='detailed')return d?'detailedDark':'detailed';return PREF.map}
 function savePref(){try{localStorage.setItem('nycmap.prefs',JSON.stringify(PREF))}catch(e){}}
 function applyAll(){applyTheme();setStyle(mapKey());BASE_L._draw();render();if(typeof HEATBTN!=='undefined'&&HEATBTN._a)HEATBTN._a.classList.toggle('on',PREF.view==='heat')}
 function setPref(k,v){PREF[k]=v;savePref();applyAll();openPanel('appear')}
@@ -1273,16 +1280,18 @@ if(darkMQ)darkMQ.addEventListener('change',()=>{if(PREF.theme==='auto')applyAll(
 setStyle(mapKey());
 function appearHTML(){
   const seg=(k,opts)=>`<div class="sc" role="radiogroup">${opts.map(([v,n])=>`<button role="radio" aria-checked="${PREF[k]===v}" class="${PREF[k]===v?'on':''}" data-pref="${k}" data-v="${v}">${n}</button>`).join('')}</div>`;
-  const SW={auto:'linear-gradient(135deg,#f2efe9 50%,#2b2c30 50%)',standard:'repeating-linear-gradient(35deg,#f2efe9 0 9px,#fcd9a4 9px 11px),#f2efe9',light:'repeating-linear-gradient(35deg,#fafafa 0 9px,#e4e4e4 9px 11px)',dark:'repeating-linear-gradient(35deg,#2b2c30 0 9px,#45464c 9px 11px)',satellite:'radial-gradient(circle at 30% 40%,#56664a,#2f3a2c 60%,#1e2a33)',simple:'repeating-linear-gradient(35deg,#f3eee4 0 9px,#d9cfbe 9px 10px)'};
-  const maps=[['auto','Automatic'],['standard','Standard'],['light','Light'],['dark','Dark'],['satellite','Satellite'],['simple','Simple']];
+  const TX='15/12318/9650',TO='15/9650/12318';
+  const PV={minimal:`url(https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/${TX})`,detailed:`url(https://tile.openstreetmap.org/${TO}.png)`,
+    vintage:`url(https://tile.openstreetmap.org/${TO}.png)`,satellite:`url(https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${TX})`};
+  const maps=[['minimal','Minimal'],['detailed','Detailed'],['vintage','Vintage'],['satellite','Satellite']];
   const r=PIN_R[PREF.pins],pv=[r[3],r[4],r[6]].map((x,i)=>`<b style="width:${x*2}px;height:${x*2}px;background:${['#7e57c2','#2b6fd6','#e0533d'][i]};border-width:${pinW()}px"></b>`).join('');
   return `<div class="set">
   <h4>View</h4>${seg('view',[['pins','Pins'],['heat','Heat map']])}
   <p class="hint">Heat map shows where the most photos were taken, on a plain white map. Pins appear on top when you zoom in to street level.</p>
   <h4>Theme</h4>${seg('theme',[['light','Light'],['dark','Dark'],['auto','Automatic']])}
   <p class="hint">Automatic follows your device's light or dark setting.</p>
-  <h4>Map</h4><div class="maps">${maps.map(([v,n])=>`<button class="mapopt${PREF.map===v?' on':''}" data-pref="map" data-v="${v}" aria-pressed="${PREF.map===v}"><i style="background:${SW[v]}"></i>${n}</button>`).join('')}</div>
-  <p class="hint">Automatic uses the standard map in light theme and the dark map in dark theme. Simple draws only the street grid, so it loads fastest.</p>
+  <h4>Map</h4><div class="maps">${maps.map(([v,n])=>`<button class="mapopt${PREF.map===v?' on':''}" data-pref="map" data-v="${v}" aria-pressed="${PREF.map===v}"><i class="${v==='vintage'?'t-vintage':''}" style="background:${PV[v]} center/cover"></i>${n}</button>`).join('')}</div>
+  <p class="hint">Minimal shows just streets and their names. Detailed adds businesses, transit and landmarks. Vintage gives the map an old paper look. In dark theme, Minimal and Detailed switch to dark versions.</p>
   <h4>Pin size</h4>${seg('pins',[['s','Small'],['m','Medium'],['l','Large']])}
   <div class="pv" aria-hidden="true">${pv}</div>
   <h4>Show pins</h4>${seg('show',[['always','Always'],['zoom','Zoomed in'],['close','Up close']])}
