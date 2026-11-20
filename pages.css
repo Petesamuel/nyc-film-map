@@ -43,3 +43,5 @@ button:hover{background:#000}
 footer{border-top:1px solid var(--line);margin-top:56px;padding-top:20px;font-size:14px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap}
 @media (max-width:560px){.top nav{display:none}main{padding-top:28px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+.btnlink{display:inline-block;background:var(--ink);color:#fff;text-decoration:none;font-weight:700;border-radius:999px;padding:13px 22px}
+.btnlink:hover{background:#000}
