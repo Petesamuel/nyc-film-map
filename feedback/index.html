@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Feedback | NYC Then and Now</title>
+<meta name="description" content="Report a wrong pin, a broken link, or send an idea.">
+<link rel="stylesheet" href="../pages.css">
+</head><body>
+<header class="top"><div class="in"><a class="back" href="../"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Back to the map</a><nav aria-label="Site pages"><a href="../about/">About</a><a href="../feedback/" aria-current=page>Feedback</a><a href="../takedown/">Request removal</a><a href="../terms/">Terms</a><a href="../privacy/">Privacy</a></nav></div></header>
+<main>
+
+<h1>Feedback</h1>
+<p class="lede">Found a pin in the wrong spot, a photo that won't load, or have an idea? Tell me here.</p>
+<form data-subject="Map feedback">
+<label data-k="Type">What is this about?
+<select name="type" required><option value="">Choose one</option><option>A pin is in the wrong place</option><option>A link or photo is broken</option><option>Wrong title, year or credit</option><option>Idea or feature request</option><option>Something else</option></select></label>
+<label data-k="Link to the photo or pin">Link to the photo or pin <span class="opt">(optional)</span><input name="link" type="url" placeholder="https://"></label>
+<label data-k="Message">Message<textarea name="message" required placeholder="What should I know? If a pin is wrong, where should it be?"></textarea></label>
+<label data-k="Reply to">Your email <span class="opt">(optional, only if you want a reply)</span><input name="email" type="email" autocomplete="email"></label>
+<button type="submit">Send feedback</button>
+<p class="small">This opens your email app with your message filled in. Hit send there and it comes straight to me.</p>
+</form>
+<div class="done" role="status">Your email app should be open now. If nothing happened, email me at <a href="mailto:p.samuel.kouz@gmail.com">p.samuel.kouz@gmail.com</a>.</div>
+
+<footer><a href="../about/">About</a><a href="../feedback/">Feedback</a><a href="../takedown/">Request removal</a><a href="../terms/">Terms</a><a href="../privacy/">Privacy</a></footer>
+</main>
+<script>
+const TO="p.samuel.kouz@gmail.com";
+document.querySelector('form').addEventListener('submit',e=>{e.preventDefault();const f=e.target;
+ if(!f.reportValidity())return;
+ const d=new FormData(f);const subj=f.dataset.subject+(d.get('subjectline')?': '+d.get('subjectline'):'');
+ const lines=[];for(const [k,v] of d){if(k==='subjectline'||!String(v).trim())continue;const lab=f.querySelector('[name="'+k+'"]').closest('label');lines.push((lab?lab.dataset.k:k)+': '+v)}
+ location.href='mailto:'+TO+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(lines.join('\n\n'));
+ document.querySelector('.done').classList.add('show')});
+const p=new URLSearchParams(location.search);for(const [k,v] of p){const el=document.querySelector('[name="'+k+'"]');if(el)el.value=v}
+</script>
+</body></html>
