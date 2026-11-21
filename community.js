@@ -46,6 +46,29 @@
   .cadm .row{display:flex;gap:8px;margin-top:8px}
   .cmsg{padding:10px 20px;border-bottom:1px solid var(--line);font-size:13.5px;line-height:1.45}
   .cmsg small{color:var(--muted);display:block}
+  #cauth{position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px}
+  #cauth[hidden]{display:none}
+  #cauth .box{background:#fff;color:#222;width:100%;max-width:420px;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.25);overflow:hidden;font-family:Figtree,system-ui,sans-serif}
+  #cauth header{position:relative;display:flex;align-items:center;justify-content:center;height:56px;border-bottom:1px solid #ebebeb;font-weight:700;font-size:16px}
+  #cauth header button{position:absolute;left:12px;top:10px;width:36px;height:36px;border:0;background:none;border-radius:50%;cursor:pointer;display:grid;place-items:center}
+  #cauth header button:hover{background:#f2f2f2}
+  #cauth .in{padding:24px}
+  #cauth h2{font-size:22px;margin:0 0 6px;font-weight:700}
+  #cauth p{margin:0 0 18px;font-size:14px;color:#6a6a6a;line-height:1.45}
+  .gbtn-g{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:44px;border:1px solid #747775;border-radius:22px;background:#fff;color:#1f1f1f;font:500 14px Roboto,Arial,sans-serif;cursor:pointer}
+  .gbtn-g:hover{background:#f8f9fa;box-shadow:0 1px 2px rgba(60,64,67,.3)}
+  .gbtn-g svg{width:20px;height:20px}
+  #cauth .or{display:flex;align-items:center;gap:12px;margin:18px 0;color:#6a6a6a;font-size:12px}
+  #cauth .or:before,#cauth .or:after{content:"";flex:1;height:1px;background:#ebebeb}
+  #cauth input{width:100%;box-sizing:border-box;height:48px;border:1px solid #b0b0b0;border-radius:8px;padding:0 14px;font:inherit;font-size:16px}
+  #cauth input:focus{outline:none;border-color:#222;box-shadow:0 0 0 1px #222}
+  #cauth .pri{width:100%;height:48px;margin-top:12px;border:0;border-radius:24px;background:#1d1c1a;color:#fff;font:inherit;font-weight:600;font-size:15px;cursor:pointer}
+  #cauth .pri:disabled{opacity:.5}
+  #cauth .fine{font-size:12px;color:#6a6a6a;margin:16px 0 0;line-height:1.5}
+  #cauth .fine a{color:#222}
+  #cauth .err{color:#c13515;font-size:13px;margin-top:8px}
+  #cauth .lnk{border:0;background:none;padding:0;font:inherit;font-size:14px;font-weight:600;text-decoration:underline;cursor:pointer;color:#222}
+  @media (max-width:560px){#cauth{align-items:flex-end;padding:0}#cauth .box{max-width:none;border-radius:16px 16px 0 0;padding-bottom:env(safe-area-inset-bottom)}}
   @media (prefers-reduced-motion:reduce){#cmode button{transition:none}}
   </style>`);
 
@@ -68,6 +91,7 @@
     if (location.hash.includes('access_token')) { history.replaceState(null, '', location.pathname + location.search); toast('You’re signed in'); }
   }
   function refreshNav() { if (!dpanel.hidden) return; buildNav(); }
+  function hasSession() { try { return Object.keys(localStorage).some(k => k.startsWith('sb-') && k.endsWith('-auth-token')); } catch (e) { return false; } }
   // public reads without the SDK
   const rest = (path) => fetch(SB + '/rest/v1/' + path, { headers: { apikey: KEY } }).then(r => r.ok ? r.json() : []);
 
@@ -76,7 +100,7 @@
   buildNav = function () {
     _buildNav();
     const who = C.prof ? (C.prof.display_name || '@' + C.prof.username) : '';
-    const top = `<button class="ditem" data-p="account">${ICU}${C.user ? esc(who) : 'Sign in or create account'}</button>
+    const top = `<button class="ditem" data-p="account">${ICU}${C.user ? esc(who) : 'Log in or sign up'}</button>
       <button class="ditem" data-p="addphoto">${ICP}Add a photo</button>
       ${C.prof && C.prof.role === 'admin' ? `<button class="ditem" data-p="admin">${ICS}Review and inbox<span class="n">${C.pending || ''}</span></button>` : ''}
       <div class="dsep"></div>`;
@@ -84,6 +108,7 @@
   };
   const _openPanel = openPanel;
   openPanel = function (p) {
+    if ((p === 'account' || p === 'addphoto') && !C.user && !hasSession()) { openAuth(p === 'addphoto' ? 'Log in to add your photos to the map.' : ''); return; }
     if (p === 'account' || p === 'addphoto' || p === 'admin') {
       const body = dpanel.querySelector('.dbody'), title = dpanel.querySelector('.back span');
       dnav.hidden = true; dpanel.hidden = false;
@@ -96,37 +121,67 @@
   };
 
   // ---------- account ----------
-  function signInForm(body, why) {
-    body.innerHTML = `<div class="cf">
-      ${why ? `<p class="note">${why}</p>` : ''}
-      <p class="note">Enter your email and we’ll send you a link to sign in. No password needed. New here? The same link creates your account.</p>
-      <label>Email<input type="email" id="cEmail" autocomplete="email" placeholder="you@example.com"></label>
-      <button class="btn" id="cSend">Email me a sign in link</button>
-      <p class="note">By signing in you agree to the <a href="terms/">Terms</a> and <a href="privacy/">Privacy</a> policy.</p>
-      <div id="cMsg"></div></div>`;
-    const go = async () => {
-      const email = body.querySelector('#cEmail').value.trim(), msg = body.querySelector('#cMsg');
-      if (!/^\S+@\S+\.\S+$/.test(email)) { msg.innerHTML = '<p class="err">Enter a valid email address.</p>'; return; }
-      body.querySelector('#cSend').disabled = true;
-      const { error } = await C.sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
-      body.querySelector('#cSend').disabled = false;
-      msg.innerHTML = error ? `<p class="err">${/rate limit/i.test(error.message) ? 'Too many sign in emails went out in the last hour. If you already asked for one, check your inbox and spam folder. Otherwise try again in a little while.' : esc(error.message)}</p>` : `<p class="ok">Check your inbox for a link from Supabase and open it on this device. It can take a minute.</p>`;
+  const GLOGO = '<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
+  const XICO = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#222" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  let AUTH = null;
+  function openAuth(why) {
+    closeDrawer();
+    if (!AUTH) {
+      AUTH = document.createElement('div'); AUTH.id = 'cauth'; AUTH.setAttribute('role', 'dialog'); AUTH.setAttribute('aria-modal', 'true'); AUTH.setAttribute('aria-label', 'Log in or sign up');
+      document.body.appendChild(AUTH);
+      AUTH.addEventListener('click', e => { if (e.target === AUTH) closeAuth(); });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && AUTH && !AUTH.hidden) closeAuth(); });
+    }
+    AUTH.hidden = false;
+    AUTH.innerHTML = `<div class="box"><header><button type="button" data-x aria-label="Close">${XICO}</button>Log in or sign up</header><div class="in">
+      <h2>Welcome to NYC Then and Now</h2>
+      <p>${why || 'Log in to share your own photos of the city and see them on the map.'}</p>
+      <button type="button" class="gbtn-g" data-google>${GLOGO}<span>Continue with Google</span></button>
+      <div class="or">or</div>
+      <label for="cEmail" style="position:absolute;left:-9999px">Email</label>
+      <input type="email" id="cEmail" autocomplete="email" placeholder="Email" inputmode="email">
+      <button type="button" class="pri" data-email>Continue with email</button>
+      <div class="err" id="cErr" role="alert"></div>
+      <p class="fine">By continuing, you agree to the <a href="terms/">Terms of Use</a> and acknowledge the <a href="privacy/">Privacy Policy</a>.</p>
+    </div></div>`;
+    AUTH.querySelector('[data-x]').onclick = closeAuth;
+    AUTH.querySelector('[data-google]').onclick = async () => {
+      await loadSB();
+      const { error } = await C.sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
+      if (error) AUTH.querySelector('#cErr').textContent = error.message;
     };
-    body.querySelector('#cSend').onclick = go;
-    body.querySelector('#cEmail').onkeydown = e => { if (e.key === 'Enter') go(); };
+    const go = async () => {
+      const email = AUTH.querySelector('#cEmail').value.trim(), errEl = AUTH.querySelector('#cErr'), btn = AUTH.querySelector('[data-email]');
+      if (!/^\S+@\S+\.\S+$/.test(email)) { errEl.textContent = 'Enter a valid email address.'; return; }
+      btn.disabled = true; errEl.textContent = '';
+      await loadSB();
+      const { error } = await C.sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
+      btn.disabled = false;
+      if (error) { errEl.textContent = /rate limit/i.test(error.message) ? 'We can\u2019t send more emails right now. Try Continue with Google, or try again later.' : error.message; return; }
+      AUTH.querySelector('.in').innerHTML = `<h2>Check your email</h2><p>We sent a sign in link to <b style="color:#222">${esc(email)}</b>. Open it on this device to finish. It can take a minute, and might land in spam.</p><button type="button" class="pri" data-done>Got it</button><p class="fine"><button type="button" class="lnk" data-back>Use a different email</button></p>`;
+      AUTH.querySelector('[data-done]').onclick = closeAuth;
+      AUTH.querySelector('[data-back]').onclick = () => openAuth(why);
+    };
+    AUTH.querySelector('[data-email]').onclick = go;
+    AUTH.querySelector('#cEmail').onkeydown = e => { if (e.key === 'Enter') go(); };
+    setTimeout(() => AUTH.querySelector('[data-google]').focus(), 50);
   }
+  function closeAuth() { if (AUTH) AUTH.hidden = true; }
+  function signInForm(body, why) { showNavSafe(); openAuth(why); }
+  function showNavSafe() { try { document.getElementById('dback').click(); } catch (e) {} }
+
   async function accountPanel(body, title) {
     title.textContent = C.user ? 'Your account' : 'Sign in';
     if (!C.user) { signInForm(body); return; }
     const p = C.prof || {};
     const { data: mine } = await C.sb.from('posts').select('id,title,status,thumb_key,image_key,created_at,mod_note').eq('user_id', C.user.id).order('created_at', { ascending: false });
     body.innerHTML = `<div class="cf">
-      <p class="note">Signed in as ${esc(C.user.email || '')}</p>
+      <p class="note">Logged in as ${esc(C.user.email || '')}</p>
       <label>Username <small>3 to 24 lowercase letters, numbers or _</small><input type="text" id="pUser" value="${esc(p.username || '')}" autocapitalize="off"></label>
       <label>Display name<input type="text" id="pName" maxlength="60" value="${esc(p.display_name || '')}"></label>
       <label>Neighborhood <small>optional</small><input type="text" id="pHood" maxlength="60" value="${esc(p.neighborhood || '')}" placeholder="e.g. Bed-Stuy"></label>
       <label>About you <small>optional</small><textarea id="pBio" maxlength="300">${esc(p.bio || '')}</textarea></label>
-      <div class="row"><button class="btn" id="pSave">Save profile</button><button class="btn ghost" id="pOut">Sign out</button></div>
+      <div class="row"><button class="btn" id="pSave">Save profile</button><button class="btn ghost" id="pOut">Log out</button></div>
       <div id="pMsg"></div></div>
       <div class="about" style="padding-top:0"><p><b>Your photos</b></p></div>
       ${(mine || []).length ? mine.map(m => `<div class="row2" data-cpost="${m.id}"><img src="${PUB + esc(m.thumb_key || m.image_key)}" alt=""><div><b>${esc(m.title)}<span class="cpill ${m.status}">${{ pending: 'In review', approved: 'Live', rejected: 'Not approved', removed: 'Removed' }[m.status]}</span></b><span>${new Date(m.created_at).toLocaleDateString()}${m.mod_note ? ' · ' + esc(m.mod_note) : ''}</span></div></div>`).join('') : '<p class="empty">Photos you add show up here. <a href="#" data-goadd>Add your first photo</a>.</p>'}`;
@@ -138,7 +193,7 @@
       if (error) { msg.innerHTML = `<p class="err">${error.code === '23505' ? 'That username is taken. Try another.' : esc(error.message)}</p>`; return; }
       Object.assign(C.prof, upd); msg.innerHTML = '<p class="ok">Saved.</p>';
     };
-    body.querySelector('#pOut').onclick = async () => { await C.sb.auth.signOut(); C.user = null; C.prof = null; toast('Signed out'); openPanel('account'); };
+    body.querySelector('#pOut').onclick = async () => { await C.sb.auth.signOut(); C.user = null; C.prof = null; toast('Logged out'); showNav(); buildNav(); };
     const ga = body.querySelector('[data-goadd]'); if (ga) ga.onclick = e => { e.preventDefault(); openPanel('addphoto'); };
     body.querySelectorAll('[data-cpost]').forEach(r => r.onclick = () => { const post = C.posts.find(x => x.id === r.dataset.cpost); if (post) { closeDrawer(); setMode(C.mode === 'archive' ? 'both' : C.mode); map.setView([post.lat, post.lon], 18); } });
   }
