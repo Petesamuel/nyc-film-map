@@ -5,7 +5,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>NYC Film Locations: Then &amp; Now Map v2</title>
-<style>@font-face{font-family:Figtree;font-style:normal;font-weight:400;font-display:swap;src:url(vendor/fonts/figtree-latin-400-normal.woff2) format('woff2')}@font-face{font-family:Figtree;font-style:normal;font-weight:500;font-display:swap;src:url(vendor/fonts/figtree-latin-500-normal.woff2) format('woff2')}@font-face{font-family:Figtree;font-style:normal;font-weight:600;font-display:swap;src:url(vendor/fonts/figtree-latin-600-normal.woff2) format('woff2')}@font-face{font-family:Figtree;font-style:normal;font-weight:700;font-display:swap;src:url(vendor/fonts/figtree-latin-700-normal.woff2) format('woff2')}</style>
+<style>@font-face{font-family:Figtree;font-style:normal;font-weight:400;font-display:swap;src:url(vendor/fonts/figtree-latin-400-normal.woff2) format('woff2')}@font-face{font-family:Figtree;font-style:normal;font-weight:500;font-display:swap;src:url(vendor/fonts/figtree-latin-500-normal.woff2) format('woff2')}@font-face{font-family:Figtree;font-style:normal;font-weight:600;font-display:swap;src:url(vendor/fonts/figtree-latin-600-normal.woff2) format('woff2')}@font-face{font-family:Figtree;font-style:normal;font-weight:700;font-display:swap;src:url(vendor/fonts/figtree-latin-700-normal.woff2) format('woff2')}#count{display:none!important}
+@media (hover:none) and (pointer:coarse){.leaflet-control-zoom{display:none!important}}
+.leaflet-control-attribution{display:none!important}
+body.attr-open .leaflet-control-attribution{display:block!important;max-width:calc(100vw - 70px);border-radius:8px;padding:4px 8px!important;font-size:11px}
+.attrbtn{width:26px!important;height:26px!important;line-height:26px!important;border-radius:50%!important;font:italic 700 13px Georgia,serif!important;display:grid!important;place-items:center;text-decoration:none}
+</style>
 <style>
 /* required styles */
 
@@ -901,7 +906,7 @@ html[data-theme=dark] .sc button.on{background:#44444a}
 .set .reset{margin-top:22px;width:100%}
 </style>
 <script>/* reload once when a newer version of the map is live (GitHub Pages caches pages for 10 minutes) */
-window.BUILD='1795289823';(function(){try{fetch('ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=v.trim();if(v&&v!==window.BUILD&&sessionStorage.getItem('nycmap.rl')!==v){sessionStorage.setItem('nycmap.rl',v);location.reload()}}).catch(()=>{})}catch(e){}})();</script>
+window.BUILD='1795302700';(function(){try{fetch('ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=v.trim();if(v&&v!==window.BUILD&&sessionStorage.getItem('nycmap.rl')!==v){sessionStorage.setItem('nycmap.rl',v);location.reload()}}).catch(()=>{})}catch(e){}})();</script>
 </head>
 <body>
 <div id="app">
@@ -1324,16 +1329,19 @@ function buildNav(){const n=o=>Object.keys(o).length;
   <button class="ditem" data-p="appear">${IC.layers}Appearance</button>
   <button class="ditem" data-a="share">${IC.link}Copy link to this view</button>
   <div class="dsep"></div>
-  <button class="ditem" data-p="about">${IC.info}About and sources</button>
-  <a class="ditem" href="about/">${IC.info}About this map</a>
-  <a class="ditem" href="feedback/">${IC.link}Send feedback</a>
-  <a class="ditem" href="takedown/">${IC.link}Request removal</a>
-  <a class="ditem" href="terms/">${IC.link}Terms and privacy</a>`}
+  <button class="ditem" data-p="aboutmenu">${IC.info}About</button>`}
 dnav.onclick=e=>{const b=e.target.closest('.ditem');if(!b||b.tagName==='A')return;if(b.dataset.p)openPanel(b.dataset.p);else action(b.dataset.a)};
 document.getElementById('dback').onclick=showNav;
 function shotRow(r,removeKind){return `<div class="row2" data-u="${esc(r.u)}" data-ll="${r.ll}">${r.i?`<img src="${esc(imgUrl(r.i,200))}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ph'}))">`:'<div class="ph"></div>'}<div><b>${esc(r.t)}</b><span>${esc(r.l)} · ${esc(r.s)}</span></div>${removeKind?`<button class="ico x" data-rm="${removeKind}" aria-label="Remove">${IC.x}</button>`:''}</div>`}
 function openPanel(p){const body=dpanel.querySelector('.dbody'),title=dpanel.querySelector('.back span');dnav.hidden=true;dpanel.hidden=false;
   const list=(o,kind,empty)=>{const v=Array.isArray(o)?o:Object.values(o).reverse();body.innerHTML=v.length?v.map(r=>shotRow(r,kind)).join(''):`<p class="empty">${empty}</p>`};
+  if(p==='aboutmenu'){title.textContent='About';body.innerHTML=`<div class="dnav" style="padding-top:4px">
+    <a class="ditem" href="about/">${IC.info}About this map</a>
+    <button class="ditem" data-sub="about">${IC.layers}Sources and credits</button>
+    <a class="ditem" href="feedback/">${IC.link}Send feedback</a>
+    <a class="ditem" href="takedown/">${IC.link}Request removal</a>
+    <a class="ditem" href="terms/">${IC.link}Terms of use</a>
+    <a class="ditem" href="privacy/">${IC.link}Privacy</a></div>`;body.querySelector('[data-sub]').onclick=()=>openPanel('about');return}
   if(p==='saved'){title.textContent='Saved';list(SAVES,'save','Shots you save show up here. Open a pin and tap Save.')}
   if(p==='liked'){title.textContent='Liked';list(LIKES,'like','Shots you like show up here. Open a pin and tap Like.')}
   if(p==='recent'){title.textContent='Recently viewed';list(RECENT,'','Pins you open show up here.');if(RECENT.length)body.insertAdjacentHTML('beforeend','<div class="form"><button class="btn ghost" data-clear="recent">Clear history</button></div>')}
@@ -1445,6 +1453,9 @@ function appearHTML(){
 
 // ===== map controls: zoom + locate =====
 L.control.zoom({position:'bottomright'}).addTo(map);
+map.attributionControl.setPrefix(false);map.attributionControl.setPosition('bottomleft');
+const AttrBtn=L.Control.extend({options:{position:'bottomleft'},onAdd(){const d=L.DomUtil.create('div','leaflet-bar');const a=L.DomUtil.create('a','attrbtn',d);a.href='#';a.textContent='i';a.title='Map credits';a.setAttribute('role','button');a.setAttribute('aria-label','Map credits');
+  L.DomEvent.on(a,'click',e=>{L.DomEvent.preventDefault(e);document.body.classList.toggle('attr-open')});L.DomEvent.disableClickPropagation(d);return d}});new AttrBtn().addTo(map);
 const Loc=L.Control.extend({options:{position:'bottomright'},onAdd(){const d=L.DomUtil.create('div','leaflet-bar');const a=L.DomUtil.create('a','locbtn',d);a.href='#';a.title='Show my location';a.setAttribute('role','button');a.innerHTML=IC.loc;
   L.DomEvent.on(a,'click',e=>{L.DomEvent.preventDefault(e);action('near')});L.DomEvent.disableClickPropagation(d);return d}});new Loc().addTo(map);
 const HeatBtn=L.Control.extend({options:{position:'bottomright'},onAdd(){const d=L.DomUtil.create('div','leaflet-bar');const a=L.DomUtil.create('a','heatbtn',d);a.href='#';a.title='Heat map';a.setAttribute('role','button');a.setAttribute('aria-label','Heat map');

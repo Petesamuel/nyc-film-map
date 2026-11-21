@@ -6,7 +6,8 @@
   const KEY = 'sb_publishable_bdXBpE0UULjIjYDNrHg83g_DsW0WUsb';
   const PUB = SB + '/storage/v1/object/public/uploads/';
   const C = { sb: null, user: null, prof: null, posts: [], layer: null, mode: 'archive', pending: 0 };
-  const ADD = { file: null, preview: '', title: '', year: '', approx: false, desc: '', rights: '', place: '', ll: null, method: '' };
+  const ADD = { kind: '', file: null, preview: '', title: '', year: '', approx: false, desc: '', rights: '', place: '', ll: null, method: '' };
+  const KINDS = [['p', 'Photo'], ['c', 'Postcard'], ['i', 'Illustration or print'], ['m', 'Map'], ['b', 'Blueprint or plan'], ['d', 'Document']];
   const RIGHTS = [['own_photo', 'I took this photo'], ['family_photo', 'It is from my family’s collection'], ['permission', 'I have the owner’s permission'], ['public_domain', 'It is in the public domain']];
   const ICU = '<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>';
   const ICP = '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="15" rx="2"/><circle cx="12" cy="12.5" r="3.5"/><path d="M8 5l1.5-2h5L16 5"/></svg>';
@@ -35,7 +36,6 @@
   #cmode{position:fixed;z-index:1000;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom));display:flex;background:var(--paper);border-radius:20px;box-shadow:var(--shadow);padding:3px}
   #cmode button{border:0;background:none;font:600 13px Figtree,sans-serif;color:var(--muted);height:32px;padding:0 14px;border-radius:16px;cursor:pointer}
   #cmode button.on{background:var(--ink);color:var(--paper)}
-  @media (max-width:560px){#cmode{bottom:calc(50px + env(safe-area-inset-bottom))}}
   .cpop img{width:100%;max-height:220px;object-fit:cover;border-radius:8px;display:block;background:var(--soft)}
   .cpop b{display:block;margin:8px 0 2px;font-size:14px}.cpop span{font-size:12.5px;color:var(--muted)}
   .cpop .row{display:flex;justify-content:space-between;margin-top:8px;font-size:12.5px}
@@ -46,6 +46,14 @@
   .cadm .row{display:flex;gap:8px;margin-top:8px}
   .cmsg{padding:10px 20px;border-bottom:1px solid var(--line);font-size:13.5px;line-height:1.45}
   .cmsg small{color:var(--muted);display:block}
+  #cadd{position:fixed;inset:0;z-index:3500;background:var(--paper);display:flex;flex-direction:column}
+  #cadd[hidden]{display:none}
+  #cadd header{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;height:calc(54px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 6px 0;border-bottom:1px solid var(--line);font-weight:700;font-size:16px;text-align:center;color:var(--ink)}
+  #cadd header button{width:44px;height:44px;border:0;background:none;color:var(--ink);cursor:pointer;display:grid;place-items:center;border-radius:50%}
+  #cadd .cb{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;width:100%;max-width:560px;margin:0 auto;padding-bottom:calc(24px + env(safe-area-inset-bottom))}
+  .cfab{width:56px;height:56px;border-radius:50%;border:0;background:var(--accent,#f2b705);color:#1d1c1a;box-shadow:0 4px 14px rgba(0,0,0,.28);display:grid;place-items:center;cursor:pointer;margin-top:12px!important}
+  .cfab:active{transform:scale(.96)}
+  .cfab:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
   #cauth{position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px}
   #cauth[hidden]{display:none}
   #cauth .box{background:#fff;color:#222;width:100%;max-width:420px;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.25);overflow:hidden;font-family:Figtree,system-ui,sans-serif}
@@ -101,19 +109,19 @@
     _buildNav();
     const who = C.prof ? (C.prof.display_name || '@' + C.prof.username) : '';
     const top = `<button class="ditem" data-p="account">${ICU}${C.user ? esc(who) : 'Log in or sign up'}</button>
-      <button class="ditem" data-p="addphoto">${ICP}Add a photo</button>
       ${C.prof && C.prof.role === 'admin' ? `<button class="ditem" data-p="admin">${ICS}Review and inbox<span class="n">${C.pending || ''}</span></button>` : ''}
       <div class="dsep"></div>`;
     dnav.insertAdjacentHTML('afterbegin', top);
   };
   const _openPanel = openPanel;
   openPanel = function (p) {
-    if ((p === 'account' || p === 'addphoto') && !C.user && !hasSession()) { openAuth(p === 'addphoto' ? 'Log in to add your photos to the map.' : ''); return; }
-    if (p === 'account' || p === 'addphoto' || p === 'admin') {
+    if (p === 'addphoto') { openAdd(); return; }
+    if (p === 'account' && !C.user && !hasSession()) { openAuth(''); return; }
+    if (p === 'account' || p === 'admin') {
       const body = dpanel.querySelector('.dbody'), title = dpanel.querySelector('.back span');
       dnav.hidden = true; dpanel.hidden = false;
       body.innerHTML = '<p class="empty">Loading…</p>';
-      loadSB().then(() => { if (p === 'account') accountPanel(body, title); else if (p === 'addphoto') addPanel(body, title); else adminPanel(body, title); })
+      loadSB().then(() => { if (p === 'account') accountPanel(body, title); else adminPanel(body, title); })
         .catch(() => { body.innerHTML = '<p class="empty">Couldn’t connect. Check your connection and try again.</p>'; });
       return;
     }
@@ -194,7 +202,7 @@
       Object.assign(C.prof, upd); msg.innerHTML = '<p class="ok">Saved.</p>';
     };
     body.querySelector('#pOut').onclick = async () => { await C.sb.auth.signOut(); C.user = null; C.prof = null; toast('Logged out'); showNav(); buildNav(); };
-    const ga = body.querySelector('[data-goadd]'); if (ga) ga.onclick = e => { e.preventDefault(); openPanel('addphoto'); };
+    const ga = body.querySelector('[data-goadd]'); if (ga) ga.onclick = e => { e.preventDefault(); openAdd(); };
     body.querySelectorAll('[data-cpost]').forEach(r => r.onclick = () => { const post = C.posts.find(x => x.id === r.dataset.cpost); if (post) { closeDrawer(); setMode(C.mode === 'archive' ? 'both' : C.mode); map.setView([post.lat, post.lon], 18); } });
   }
 
@@ -206,6 +214,7 @@
       <p class="note">Share an old photo of the city, or one you took. It goes on the map after a quick review.</p>
       <label class="cdrop" id="aDrop">${ADD.preview ? `<img src="${ADD.preview}" alt="">` : `${ICP}<span>Choose a photo<br><small>JPG, PNG or WebP</small></span>`}<input type="file" id="aFile" accept="image/jpeg,image/png,image/webp" hidden></label>
       <label>Title<input type="text" id="aTitle" maxlength="120" value="${esc(ADD.title)}" placeholder="e.g. Coney Island boardwalk"></label>
+      <label>What is it?<select id="aKind"><option value="">Choose a type</option>${KINDS.map(([v, l]) => `<option value="${v}" ${ADD.kind === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
       <div class="row"><label style="flex:1">Year taken <small>optional</small><input type="number" id="aYear" min="1830" max="2100" value="${esc(ADD.year)}" placeholder="1978"></label>
       <label class="chk" style="align-self:end;padding-bottom:10px"><input type="checkbox" id="aApprox" ${ADD.approx ? 'checked' : ''}>Roughly</label></div>
       <label>Where was it taken?<input type="text" id="aPlace" value="${esc(ADD.place)}" placeholder="An address, or two cross streets like Bedford Ave and N 7th St"></label>
@@ -217,7 +226,7 @@
       <button class="btn" id="aSend">Submit for review</button>
       <div id="aMsg"></div></div>`;
     const $ = s => body.querySelector(s);
-    const keep = () => { ADD.title = $('#aTitle').value; ADD.year = $('#aYear').value; ADD.approx = $('#aApprox').checked; ADD.place = $('#aPlace').value; ADD.desc = $('#aDesc').value; ADD.rights = $('#aRights').value; };
+    const keep = () => { ADD.kind = $('#aKind').value; ADD.title = $('#aTitle').value; ADD.year = $('#aYear').value; ADD.approx = $('#aApprox').checked; ADD.place = $('#aPlace').value; ADD.desc = $('#aDesc').value; ADD.rights = $('#aRights').value; };
     body.oninput = keep; body.onchange = keep;
     $('#aFile').onchange = e => { const f = e.target.files[0]; if (!f) return; if (f.size > 25e6) { $('#aMsg').innerHTML = '<p class="err">That file is too big. Try one under 25 MB.</p>'; return; } ADD.file = f; ADD.preview = URL.createObjectURL(f); keep(); addPanel(body, title); };
     const setLL = (ll, method) => { ADD.ll = ll; ADD.method = method; keep(); addPanel(body, title); };
@@ -241,13 +250,13 @@
     $('#aSend').onclick = () => { keep(); submit($, body, title); };
   }
   function startPick(start, done) {
-    closeDrawer();
+    ADDV.hidden = true; document.body.style.overflow = '';
     if (start) map.setView(start, 18);
     const el = document.createElement('div'); el.id = 'cpick';
     el.innerHTML = `<svg class="x" viewBox="0 0 24 34"><path d="M12 33s11-12.4 11-21A11 11 0 0 0 1 12c0 8.6 11 21 11 21z" fill="#1d1c1a" stroke="#fff" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="#f2b705"/></svg>
       <div class="bar"><span>Move the map so the pin sits where the photo was taken.</span><div><button class="btn" id="cpOk">Use this spot</button><button class="btn ghost" id="cpNo">Cancel</button></div></div>`;
     document.body.appendChild(el);
-    const end = ok => { const c = map.getCenter(); el.remove(); openDrawer(); if (ok) done([c.lat, c.lng]); openPanel('addphoto'); };
+    const end = ok => { const c = map.getCenter(); el.remove(); ADDV.hidden = false; document.body.style.overflow = 'hidden'; if (ok) done([c.lat, c.lng]); else addPanel(ADDB, ADDT); };
     el.querySelector('#cpOk').onclick = () => end(true);
     el.querySelector('#cpNo').onclick = () => end(false);
   }
@@ -265,6 +274,7 @@
     const msg = $('#aMsg'), err = t => { msg.innerHTML = `<p class="err">${t}</p>`; };
     if (!ADD.file) return err('Choose a photo first.');
     if (!ADD.title.trim()) return err('Give it a title.');
+    if (!ADD.kind) return err('Choose what type of image it is.');
     if (!ADD.ll) return err('Choose where it was taken.');
     if (ADD.ll[0] < 40.4 || ADD.ll[0] > 41 || ADD.ll[1] < -74.3 || ADD.ll[1] > -73.6) return err('That spot is outside New York City.');
     if (!ADD.rights) return err('Tell us whose photo it is.');
@@ -276,15 +286,36 @@
       const id = crypto.randomUUID(), key = `${C.user.id}/${id}.jpg`, tkey = `${C.user.id}/${id}_t.jpg`;
       let r = await C.sb.storage.from('uploads').upload(key, big.blob, { contentType: 'image/jpeg', upsert: false }); if (r.error) throw r.error;
       r = await C.sb.storage.from('uploads').upload(tkey, small.blob, { contentType: 'image/jpeg', upsert: false }); if (r.error) throw r.error;
-      r = await C.sb.from('posts').insert({ user_id: C.user.id, title: ADD.title.trim(), description: ADD.desc.trim() || null, year_taken: yr, year_approx: ADD.approx, lat: ADD.ll[0], lon: ADD.ll[1], place_label: ADD.place.trim() || null, pin_method: ADD.method || 'manual', image_key: key, thumb_key: tkey, width: big.w, height: big.h, rights: ADD.rights });
+      r = await C.sb.from('posts').insert({ user_id: C.user.id, title: ADD.title.trim(), description: ADD.desc.trim() || null, year_taken: yr, year_approx: ADD.approx, lat: ADD.ll[0], lon: ADD.ll[1], place_label: ADD.place.trim() || null, pin_method: ADD.method || 'manual', image_key: key, thumb_key: tkey, width: big.w, height: big.h, rights: ADD.rights, kind: ADD.kind });
       if (r.error) throw r.error;
-      Object.assign(ADD, { file: null, preview: '', title: '', year: '', approx: false, desc: '', rights: '', place: '', ll: null, method: '' });
+      Object.assign(ADD, { kind: '', file: null, preview: '', title: '', year: '', approx: false, desc: '', rights: '', place: '', ll: null, method: '' });
       body.innerHTML = `<div class="cf"><p class="ok"><b>Thanks, it’s in.</b><br>Your photo will show on the map once it’s reviewed. You can see its status under Your account.</p><div class="row"><button class="btn" id="aMore">Add another</button><button class="btn ghost" id="aAcct">Your account</button></div></div>`;
-      body.querySelector('#aMore').onclick = () => openPanel('addphoto');
-      body.querySelector('#aAcct').onclick = () => openPanel('account');
+      body.querySelector('#aMore').onclick = () => addPanel(ADDB, ADDT);
+      body.querySelector('#aAcct').onclick = () => { closeAdd(); openDrawer(); openPanel('account'); };
       if (C.prof && C.prof.role === 'admin') C.pending++;
     } catch (e) { btn.disabled = false; btn.textContent = 'Submit for review'; err(esc(e.message || 'Upload failed. Try again.')); }
   }
+
+
+  // ---------- full screen "New photo" + plus button ----------
+  const ADDV = document.createElement('div'); ADDV.id = 'cadd'; ADDV.hidden = true; ADDV.setAttribute('role', 'dialog'); ADDV.setAttribute('aria-modal', 'true'); ADDV.setAttribute('aria-label', 'New photo');
+  ADDV.innerHTML = `<header><button type="button" data-x aria-label="Close"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button><span>New photo</span><i></i></header><div class="cb"></div>`;
+  document.body.appendChild(ADDV);
+  const ADDB = ADDV.querySelector('.cb'), ADDT = ADDV.querySelector('header span');
+  ADDV.querySelector('[data-x]').onclick = () => closeAdd();
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !ADDV.hidden) closeAdd(); });
+  function openAdd() {
+    if (!C.user && !hasSession()) { openAuth('Log in to add your photos to the map.'); return; }
+    closeDrawer(); ADDV.hidden = false; document.body.style.overflow = 'hidden';
+    ADDB.innerHTML = '<p class="empty">Loading\u2026</p>';
+    loadSB().then(() => { ADDT.textContent = 'New photo'; if (!C.user) { closeAdd(); openAuth('Log in to add your photos to the map.'); return; } addPanel(ADDB, ADDT); ADDT.textContent = 'New photo'; });
+  }
+  function closeAdd() { ADDV.hidden = true; document.body.style.overflow = ''; }
+  const Fab = L.Control.extend({ options: { position: 'bottomright' }, onAdd() {
+    const b = L.DomUtil.create('button', 'cfab'); b.type = 'button'; b.setAttribute('aria-label', 'Add a photo'); b.title = 'Add a photo';
+    b.innerHTML = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+    L.DomEvent.disableClickPropagation(b); L.DomEvent.on(b, 'click', e => { L.DomEvent.preventDefault(e); openAdd(); }); return b; } });
+  const fab = new Fab().addTo(map); const corner = fab.getContainer().parentNode; corner.appendChild(fab.getContainer());
 
   // ---------- community pins + mode switch ----------
   const CM = document.createElement('div'); CM.id = 'cmode'; CM.setAttribute('role', 'group'); CM.setAttribute('aria-label', 'What to show');
@@ -300,21 +331,27 @@
   }
   async function loadPosts() {
     if (C.loaded) return; C.loaded = true;
-    C.posts = await rest('posts?select=id,title,description,year_taken,year_approx,lat,lon,place_label,image_key,thumb_key,created_at,profiles(username,display_name)&status=eq.approved&order=created_at.desc&limit=5000');
+    C.posts = await rest('posts?select=id,kind,title,description,year_taken,year_approx,lat,lon,place_label,image_key,thumb_key,created_at,profiles(username,display_name)&status=eq.approved&order=created_at.desc&limit=5000');
+    drawPosts();
+  }
+  function drawPosts() {
     if (!C.layer) C.layer = L.layerGroup();
-    C.posts.forEach(p => {
+    C.layer.clearLayers();
+    const sel = (typeof KINDSEL !== 'undefined') ? KINDSEL : new Set();
+    C.posts.filter(p => !sel.size || sel.has(p.kind || 'p')).forEach(p => {
       const m = L.circleMarker([p.lat, p.lon], { pane: 'cpane', radius: 8, weight: 3, color: '#f2b705', fillColor: '#1d1c1a', fillOpacity: 1 });
       m.bindPopup(() => postPopup(p), { maxWidth: 300, minWidth: 240, className: 'cpopw' });
       C.layer.addLayer(m);
     });
   }
+  if (typeof render === 'function') { const _aa = render; render = function () { const r = _aa.apply(this, arguments); if (C.loaded && C.posts.length) drawPosts(); return r; }; }
   map.createPane('cpane'); map.getPane('cpane').style.zIndex = 640;
   function postPopup(p) {
     const by = p.profiles ? (p.profiles.display_name || '@' + p.profiles.username) : 'a contributor';
     const yr = p.year_taken ? (p.year_approx ? 'around ' : '') + p.year_taken : '';
     const d = document.createElement('div'); d.className = 'cpop';
     d.innerHTML = `<a href="${PUB + esc(p.image_key)}" target="_blank" rel="noopener"><img src="${PUB + esc(p.thumb_key || p.image_key)}" alt="${esc(p.title)}"></a>
-      <b>${esc(p.title)}</b><span>${[yr, p.place_label].filter(Boolean).map(esc).join(' · ')}</span>
+      <b>${esc(p.title)}</b><span>${[(KINDS.find(k => k[0] === p.kind) || [0, ''])[1], yr, p.place_label].filter(Boolean).map(esc).join(' · ')}</span>
       ${p.description ? `<p style="font-size:13px;margin:6px 0 0;line-height:1.45">${esc(p.description)}</p>` : ''}
       <div class="row"><span>Shared by ${esc(by)}</span><button data-rep>Report</button></div>`;
     d.querySelector('[data-rep]').onclick = () => report('post', p.id);
