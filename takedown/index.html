@@ -11,7 +11,7 @@
 <h1>Request removal</h1>
 <p class="lede">If you own the rights to an image on this map and want it credited differently or taken down, I'll take care of it.</p>
 <p>The map does not copy or host anyone's photos. Each image loads from its original site and links back there. Even so, if you would rather your work not appear, that's your call and I'll respect it.</p>
-<form data-subject="Removal request">
+<form data-table="takedown_requests" data-subject="Removal request" data-btn="Send request" data-thanks="Thanks, your request is in. I'll reply by email as soon as I can.">
 <label data-k="Name">Your name<input name="name" required autocomplete="name"></label>
 <label data-k="Email">Your email<input name="email" type="email" required autocomplete="email"></label>
 <label data-k="Organization or site">Organization or website <span class="opt">(optional)</span><input name="org"></label>
@@ -19,22 +19,27 @@
 <select name="ask" required><option value="">Choose one</option><option>Remove these images</option><option>Remove everything from my site or collection</option><option>Change how my work is credited</option></select></label>
 <label data-k="Images">Which images? <span class="opt">Paste links to the photos or pins, or name the whole site</span><textarea name="images" required></textarea></label>
 <label data-k="Notes">Anything else <span class="opt">(optional, e.g. the exact credit line you want)</span><textarea name="notes" style="min-height:90px"></textarea></label>
-<label class="check" data-k="Confirmed"><input type="checkbox" name="confirm" value="Yes, I own the rights or act for the owner" required>I own the rights to these images or I'm authorized to act for the owner.</label>
+<label class="check" data-k="Confirmed"><input type="checkbox" name="confirmed" required>I own the rights to these images or I'm authorized to act for the owner.</label>
 <button type="submit">Send request</button>
-<p class="small">This opens your email app with the request filled in. I'll reply as soon as I can, usually within a few days.</p>
+<p class="small">Your request goes to a private inbox only I can read. I'll reply as soon as I can, usually within a few days.</p>
 </form>
-<div class="done" role="status">Your email app should be open now. If nothing happened, email me at <a href="mailto:p.samuel.kouz@gmail.com">p.samuel.kouz@gmail.com</a>.</div>
+<div class="done" role="status" tabindex="-1"></div>
 
 <footer><a href="../about/">About</a><a href="../feedback/">Feedback</a><a href="../takedown/">Request removal</a><a href="../terms/">Terms</a><a href="../privacy/">Privacy</a></footer>
 </main>
 <script>
-const TO="p.samuel.kouz@gmail.com";
-document.querySelector('form').addEventListener('submit',e=>{e.preventDefault();const f=e.target;
- if(!f.reportValidity())return;
- const d=new FormData(f);const subj=f.dataset.subject+(d.get('subjectline')?': '+d.get('subjectline'):'');
- const lines=[];for(const [k,v] of d){if(k==='subjectline'||!String(v).trim())continue;const lab=f.querySelector('[name="'+k+'"]').closest('label');lines.push((lab?lab.dataset.k:k)+': '+v)}
- location.href='mailto:'+TO+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(lines.join('\n\n'));
- document.querySelector('.done').classList.add('show')});
-const p=new URLSearchParams(location.search);for(const [k,v] of p){const el=document.querySelector('[name="'+k+'"]');if(el)el.value=v}
+const SB="https://iurancbmhdizoafdhctq.supabase.co", KEY="sb_publishable_bdXBpE0UULjIjYDNrHg83g_DsW0WUsb", TO="p.samuel.kouz@gmail.com";
+const f=document.querySelector('form'), done=document.querySelector('.done'), btn=f.querySelector('button');
+f.addEventListener('submit',async e=>{e.preventDefault();if(!f.reportValidity())return;
+ const d=new FormData(f), row={};
+ for(const el of f.querySelectorAll('[name]')){const k=el.name;if(el.type==='checkbox')row[k]=el.checked;else if(String(d.get(k)||'').trim())row[k]=String(d.get(k)).trim()}
+ btn.disabled=true;btn.textContent='Sending...';
+ try{const r=await fetch(SB+'/rest/v1/'+f.dataset.table,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(row)});
+  if(!r.ok)throw new Error(r.status);
+  f.hidden=true;done.textContent=f.dataset.thanks;done.classList.add('show');done.focus()}
+ catch(err){btn.disabled=false;btn.textContent=f.dataset.btn;
+  const lines=Object.entries(row).map(([k,v])=>k+': '+v);
+  done.innerHTML='That didn\'t go through. <a href="mailto:'+TO+'?subject='+encodeURIComponent(f.dataset.subject)+'&body='+encodeURIComponent(lines.join('\n\n'))+'">Send it by email instead</a>.';done.classList.add('show')}});
+const p=new URLSearchParams(location.search);for(const [k,v] of p){const el=f.querySelector('[name="'+k+'"]');if(el&&el.type!=='checkbox')el.value=v}
 </script>
 </body></html>

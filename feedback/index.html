@@ -10,27 +10,32 @@
 
 <h1>Feedback</h1>
 <p class="lede">Found a pin in the wrong spot, a photo that won't load, or have an idea? Tell me here.</p>
-<form data-subject="Map feedback">
+<form data-table="feedback" data-subject="Map feedback" data-btn="Send feedback" data-thanks="Thanks, I got it. If you left your email, I'll reply when I can.">
 <label data-k="Type">What is this about?
 <select name="type" required><option value="">Choose one</option><option>A pin is in the wrong place</option><option>A link or photo is broken</option><option>Wrong title, year or credit</option><option>Idea or feature request</option><option>Something else</option></select></label>
 <label data-k="Link to the photo or pin">Link to the photo or pin <span class="opt">(optional)</span><input name="link" type="url" placeholder="https://"></label>
 <label data-k="Message">Message<textarea name="message" required placeholder="What should I know? If a pin is wrong, where should it be?"></textarea></label>
 <label data-k="Reply to">Your email <span class="opt">(optional, only if you want a reply)</span><input name="email" type="email" autocomplete="email"></label>
 <button type="submit">Send feedback</button>
-<p class="small">This opens your email app with your message filled in. Hit send there and it comes straight to me.</p>
+<p class="small">Your message goes to a private inbox only I can read.</p>
 </form>
-<div class="done" role="status">Your email app should be open now. If nothing happened, email me at <a href="mailto:p.samuel.kouz@gmail.com">p.samuel.kouz@gmail.com</a>.</div>
+<div class="done" role="status" tabindex="-1"></div>
 
 <footer><a href="../about/">About</a><a href="../feedback/">Feedback</a><a href="../takedown/">Request removal</a><a href="../terms/">Terms</a><a href="../privacy/">Privacy</a></footer>
 </main>
 <script>
-const TO="p.samuel.kouz@gmail.com";
-document.querySelector('form').addEventListener('submit',e=>{e.preventDefault();const f=e.target;
- if(!f.reportValidity())return;
- const d=new FormData(f);const subj=f.dataset.subject+(d.get('subjectline')?': '+d.get('subjectline'):'');
- const lines=[];for(const [k,v] of d){if(k==='subjectline'||!String(v).trim())continue;const lab=f.querySelector('[name="'+k+'"]').closest('label');lines.push((lab?lab.dataset.k:k)+': '+v)}
- location.href='mailto:'+TO+'?subject='+encodeURIComponent(subj)+'&body='+encodeURIComponent(lines.join('\n\n'));
- document.querySelector('.done').classList.add('show')});
-const p=new URLSearchParams(location.search);for(const [k,v] of p){const el=document.querySelector('[name="'+k+'"]');if(el)el.value=v}
+const SB="https://iurancbmhdizoafdhctq.supabase.co", KEY="sb_publishable_bdXBpE0UULjIjYDNrHg83g_DsW0WUsb", TO="p.samuel.kouz@gmail.com";
+const f=document.querySelector('form'), done=document.querySelector('.done'), btn=f.querySelector('button');
+f.addEventListener('submit',async e=>{e.preventDefault();if(!f.reportValidity())return;
+ const d=new FormData(f), row={};
+ for(const el of f.querySelectorAll('[name]')){const k=el.name;if(el.type==='checkbox')row[k]=el.checked;else if(String(d.get(k)||'').trim())row[k]=String(d.get(k)).trim()}
+ btn.disabled=true;btn.textContent='Sending...';
+ try{const r=await fetch(SB+'/rest/v1/'+f.dataset.table,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(row)});
+  if(!r.ok)throw new Error(r.status);
+  f.hidden=true;done.textContent=f.dataset.thanks;done.classList.add('show');done.focus()}
+ catch(err){btn.disabled=false;btn.textContent=f.dataset.btn;
+  const lines=Object.entries(row).map(([k,v])=>k+': '+v);
+  done.innerHTML='That didn\'t go through. <a href="mailto:'+TO+'?subject='+encodeURIComponent(f.dataset.subject)+'&body='+encodeURIComponent(lines.join('\n\n'))+'">Send it by email instead</a>.';done.classList.add('show')}});
+const p=new URLSearchParams(location.search);for(const [k,v] of p){const el=f.querySelector('[name="'+k+'"]');if(el&&el.type!=='checkbox')el.value=v}
 </script>
 </body></html>
