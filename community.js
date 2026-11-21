@@ -110,7 +110,7 @@
       body.querySelector('#cSend').disabled = true;
       const { error } = await C.sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
       body.querySelector('#cSend').disabled = false;
-      msg.innerHTML = error ? `<p class="err">${esc(error.message)}</p>` : `<p class="ok">Check your inbox for a link from Supabase and open it on this device. It can take a minute.</p>`;
+      msg.innerHTML = error ? `<p class="err">${/rate limit/i.test(error.message) ? 'Too many sign in emails went out in the last hour. If you already asked for one, check your inbox and spam folder. Otherwise try again in a little while.' : esc(error.message)}</p>` : `<p class="ok">Check your inbox for a link from Supabase and open it on this device. It can take a minute.</p>`;
     };
     body.querySelector('#cSend').onclick = go;
     body.querySelector('#cEmail').onkeydown = e => { if (e.key === 'Enter') go(); };
