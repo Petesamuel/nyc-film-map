@@ -80,6 +80,10 @@
   .pfoot button{color:var(--muted);font-size:12.5px;text-decoration:underline}
   .cpop [data-prof]{font-weight:600;text-decoration:none!important;color:var(--ink)!important}
   .row2 .rm{margin-left:auto;flex:none}
+  .cdanger{border:0;background:none;padding:0;font:inherit;font-size:14px;color:#b3261e;cursor:pointer;text-decoration:underline}
+  .cstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 20px}
+  .cstats div{background:var(--soft);border-radius:12px;padding:10px;display:grid;gap:2px}
+  .cstats b{font-size:20px}.cstats span{font-size:12px;color:var(--muted)}.cstats small{font-size:11px;color:#1b6b36}
   #ccm{position:fixed;inset:0;z-index:6000;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
   #ccm[hidden]{display:none}
   #ccm .sh{background:var(--paper);color:var(--ink);width:100%;max-width:520px;max-height:80vh;border-radius:16px 16px 0 0;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}
@@ -143,6 +147,8 @@
     if (location.hash.includes('access_token')) { history.replaceState(null, '', location.pathname + location.search); toast('You’re signed in'); }
   }
   function refreshNav() { if (!dpanel.hidden) return; buildNav(); }
+  const BLK = { get() { try { return JSON.parse(localStorage.getItem('cblocked') || '[]'); } catch (e) { return []; } }, has(id) { return this.get().includes(id); },
+    add(id) { const a = this.get(); if (!a.includes(id)) a.push(id); try { localStorage.setItem('cblocked', JSON.stringify(a)); } catch (e) {} } };
   function hasSession() { try { return Object.keys(localStorage).some(k => k.startsWith('sb-') && k.endsWith('-auth-token')); } catch (e) { return false; } }
   // public reads without the SDK
   const rest = (path) => fetch(SB + '/rest/v1/' + path, { headers: { apikey: KEY } }).then(r => r.ok ? r.json() : []);
@@ -245,6 +251,20 @@
       const { error } = await C.sb.from('profiles').update(upd).eq('id', C.user.id);
       if (error) { msg.innerHTML = `<p class="err">${error.code === '23505' ? 'That username is taken. Try another.' : esc(error.message)}</p>`; return; }
       Object.assign(C.prof, upd); msg.innerHTML = '<p class="ok">Saved.</p>';
+    };
+    body.insertAdjacentHTML('beforeend', `<div class="about"><p><button class="cdanger" id="pDel">Delete account</button></p></div>`);
+    body.querySelector('#pDel').onclick = async () => {
+      if (!window.confirm('Delete your account? This permanently removes your profile, the photos you shared, your comments and your saved shots. This can\u2019t be undone.')) return;
+      try {
+        const { data: files } = await C.sb.storage.from('uploads').list(C.user.id, { limit: 1000 });
+        if (files && files.length) await C.sb.storage.from('uploads').remove(files.map(f => C.user.id + '/' + f.name));
+      } catch (e) {}
+      const { error } = await C.sb.rpc('delete_my_account');
+      if (error) {
+        await C.sb.from('feedback').insert({ user_id: C.user.id, email: C.user.email, type: 'Delete my account', message: 'Please delete my account and everything I shared.' });
+        toast('Request sent. Your account will be deleted soon.');
+      } else toast('Your account was deleted');
+      await C.sb.auth.signOut(); C.user = null; C.prof = null; SYNC.ready = false; closeDrawer(); buildNav();
     };
     body.querySelector('#pOut').onclick = async () => { await C.sb.auth.signOut(); C.user = null; C.prof = null; SYNC.ready = false; toast('Logged out'); showNav(); buildNav(); };
     const ga = body.querySelector('[data-goadd]'); if (ga) ga.onclick = e => { e.preventDefault(); openAdd(); };
@@ -393,7 +413,7 @@
     if (!C.layer) C.layer = L.layerGroup();
     C.layer.clearLayers();
     const sel = (typeof KINDSEL !== 'undefined') ? KINDSEL : new Set();
-    C.posts.filter(p => !sel.size || sel.has(p.kind || 'p')).forEach(p => {
+    C.posts.filter(p => (!sel.size || sel.has(p.kind || 'p')) && !BLK.has(p.user_id)).forEach(p => {
       const m = L.circleMarker([p.lat, p.lon], { pane: 'cpane', radius: 8, weight: 3, color: '#f2b705', fillColor: '#1d1c1a', fillOpacity: 1 });
       m.bindPopup(() => postPopup(p), { maxWidth: 300, minWidth: 240, className: 'cpopw' });
       C.layer.addLayer(m);
@@ -434,9 +454,10 @@
   async function openComments(type, id) {
     CMV.hidden = false; const list = CMV.querySelector('.cl'), foot = CMV.querySelector('footer');
     list.innerHTML = '<p class="empty">Loading…</p>'; foot.innerHTML = '';
-    const rows = await rest(`comments?select=id,body,created_at,user_id,profiles(username,display_name)&target_type=eq.${type}&target_id=eq.${encodeURIComponent(id)}&status=eq.visible&order=created_at.asc&limit=500`);
+    let rows = await rest(`comments?select=id,body,created_at,user_id,profiles(username,display_name)&target_type=eq.${type}&target_id=eq.${encodeURIComponent(id)}&status=eq.visible&order=created_at.asc&limit=500`);
     const me = C.user ? C.user.id : null, admin = C.prof && C.prof.role === 'admin';
-    list.innerHTML = rows.length ? rows.map(r => { const n = r.profiles ? (r.profiles.display_name || r.profiles.username) : 'Someone'; return `<div class="cm" data-id="${r.id}"><div class="av">${esc((n || '?')[0].toUpperCase())}</div><div class="cmb"><div><b>${esc(n)}</b> <small>${ago(r.created_at)}</small></div><p>${esc(r.body)}</p><div class="cma">${r.user_id === me || admin ? '<button data-del>Delete</button>' : ''}${r.user_id !== me ? '<button data-rep>Report</button>' : ''}</div></div></div>`; }).join('') : '<p class="empty">No comments yet. Know something about this spot? Start the conversation.</p>';
+    rows = rows.filter(r => !BLK.has(r.user_id));
+    list.innerHTML = rows.length ? rows.map(r => { const n = r.profiles ? (r.profiles.display_name || r.profiles.username) : 'Someone'; return `<div class="cm" data-id="${r.id}"><div class="av">${esc((n || '?')[0].toUpperCase())}</div><div class="cmb"><div><b>${esc(n)}</b> <small>${ago(r.created_at)}</small></div><p>${esc(r.body)}</p><div class="cma">${r.user_id === me || admin ? '<button data-del>Delete</button>' : ''}${r.user_id !== me ? `<button data-rep>Report</button><button data-blk="${r.user_id}">Block</button>` : ''}</div></div></div>`; }).join('') : '<p class="empty">No comments yet. Know something about this spot? Start the conversation.</p>';
     if (!C.user && !hasSession()) { foot.innerHTML = `<button type="button" class="cfoot-login">Log in to comment</button>`; foot.querySelector('button').onclick = () => { CMV.hidden = true; openAuth('Log in to join the conversation.'); }; }
     else {
       foot.innerHTML = `<div class="cin"><textarea rows="1" maxlength="1000" placeholder="Add a comment…" aria-label="Add a comment"></textarea><button type="button" disabled>Post</button></div>`;
@@ -454,6 +475,7 @@
       const row = e.target.closest('.cm'); if (!row) return;
       if (e.target.closest('[data-del]')) { if (!confirmDel()) return; await loadSB(); const { error } = await C.sb.from('comments').delete().eq('id', row.dataset.id); if (error && admin) await C.sb.from('comments').update({ status: 'hidden' }).eq('id', row.dataset.id); row.remove(); CCOUNT.delete(type + id); }
       if (e.target.closest('[data-rep]')) report('comment', row.dataset.id);
+      const bk = e.target.closest('[data-blk]'); if (bk && window.confirm('Block this person? You won\u2019t see their comments or photos anymore.')) { BLK.add(bk.dataset.blk); openComments(type, id); if (C.layer) drawPosts(); toast('Blocked'); }
     };
   }
   function confirmDel() { return window.confirm('Delete this comment?'); }
@@ -524,9 +546,10 @@
       ${p.bio ? `<p class="pbio">${esc(p.bio)}</p>` : ''}
       <div class="pst"><b>${ps.length}</b> ${ps.length === 1 ? 'photo' : 'photos'} · Joined ${new Date(p.created_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</div>
       ${ps.length ? `<div class="pgrid">${ps.map(x => `<button data-go="${x.id}" aria-label="${esc(x.title)}"><img src="${PUB + esc(x.thumb_key || x.image_key)}" alt="" loading="lazy"></button>`).join('')}</div>` : '<p class="empty">No photos yet.</p>'}
-      <p class="pfoot"><button data-rep>Report this profile</button></p>`;
+      <p class="pfoot"><button data-rep>Report this profile</button> \u00b7 <button data-blk>Block</button></p>`;
     b.querySelectorAll('[data-go]').forEach(el => el.onclick = () => { const x = ps.find(q => q.id === el.dataset.go); PRV.hidden = true; if (C.mode === 'archive') setMode('both'); map.setView([x.lat, x.lon], 18); });
     b.querySelector('[data-rep]').onclick = () => report('profile', uid);
+    b.querySelector('[data-blk]').onclick = () => { if (!window.confirm('Block this person? You won\u2019t see their comments or photos anymore.')) return; BLK.add(uid); PRV.hidden = true; if (C.layer) drawPosts(); toast('Blocked'); };
   }
 
   // ---------- admin ----------
@@ -540,7 +563,9 @@
       C.sb.from('reports').select('*').eq('status', 'open').order('created_at', { ascending: false }).limit(50)]);
     C.pending = (pend.data || []).length;
     const sec = (t, n) => `<div class="about" style="padding-bottom:4px"><p><b>${t}</b> <span class="cpill">${n}</span></p></div>`;
-    body.innerHTML =
+    const st = (await C.sb.rpc('admin_stats')).data;
+    const statsHTML = st ? `<div class="cstats">${[['Accounts', st.users, st.users_7d ? '+' + st.users_7d + ' this week' : ''], ['Live photos', st.posts_live, ''], ['Comments', st.comments, st.comments_7d ? '+' + st.comments_7d + ' this week' : ''], ['Likes', st.likes, ''], ['Saves', st.saves, ''], ['Open reports', st.reports_open, '']].map(([l, n, d]) => `<div><b>${n}</b><span>${l}</span>${d ? `<small>${d}</small>` : ''}</div>`).join('')}</div>` : '';
+    body.innerHTML = statsHTML +
       sec('Photos waiting for review', (pend.data || []).length) +
       ((pend.data || []).map(p => `<div class="cadm" data-id="${p.id}"><a href="${PUB + esc(p.image_key)}" target="_blank" rel="noopener"><img src="${PUB + esc(p.thumb_key || p.image_key)}" alt=""></a>
         <b>${esc(p.title)}</b><p>${[p.year_taken, p.place_label, '@' + (p.profiles ? p.profiles.username : '?'), { own_photo: 'Took it', family_photo: 'Family photo', permission: 'Has permission', public_domain: 'Public domain' }[p.rights]].filter(Boolean).map(esc).join(' · ')}</p>
@@ -579,6 +604,8 @@
       if (r.error) toast('Couldn\u2019t finish logging in'); else { closeAuth(); toast('You\u2019re logged in'); }
     });
   }
+
+  if (NATIVE && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === 'ios') document.head.insertAdjacentHTML('beforeend', '<style>a[href*="support/"]{display:none!important}</style>');
 
   // ---------- start ----------
   if (/access_token|error_description/.test(location.hash)) loadSB();
