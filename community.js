@@ -54,7 +54,26 @@
   .cfab{width:56px;height:56px;border-radius:50%;border:0;background:var(--accent,#f2b705);color:#1d1c1a;box-shadow:0 4px 14px rgba(0,0,0,.28);display:grid;place-items:center;cursor:pointer;margin-top:12px!important}
   .cfab:active{transform:scale(.96)}
   .cfab:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
-  #cauth{position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px}
+  .acts{flex-wrap:wrap}
+  #ccm{position:fixed;inset:0;z-index:6000;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
+  #ccm[hidden]{display:none}
+  #ccm .sh{background:var(--paper);color:var(--ink);width:100%;max-width:520px;max-height:80vh;border-radius:16px 16px 0 0;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}
+  @media (min-width:700px){#ccm{align-items:center}#ccm .sh{border-radius:16px;max-height:70vh}}
+  #ccm header{display:flex;align-items:center;justify-content:center;position:relative;height:50px;border-bottom:1px solid var(--line);font-weight:700}
+  #ccm header button{position:absolute;right:8px;top:7px;width:36px;height:36px;border:0;background:none;color:var(--ink);border-radius:50%;cursor:pointer;display:grid;place-items:center}
+  #ccm .cl{flex:1;overflow:auto;padding:6px 0}
+  .cm{display:flex;gap:10px;padding:10px 16px}
+  .cm .av{width:32px;height:32px;border-radius:50%;background:var(--soft);display:grid;place-items:center;font-weight:700;font-size:13px;flex:none}
+  .cmb{flex:1;min-width:0}.cmb b{font-size:13.5px}.cmb small{color:var(--muted);font-size:12px}
+  .cmb p{margin:2px 0 0;font-size:14px;line-height:1.45;white-space:pre-wrap;word-wrap:break-word}
+  .cma{display:flex;gap:12px;margin-top:4px}.cma button{border:0;background:none;padding:0;color:var(--muted);font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+  #ccm footer{border-top:1px solid var(--line);padding:10px 12px}
+  .cin{display:flex;gap:8px;align-items:flex-end}
+  .cin textarea{flex:1;resize:none;border:1px solid var(--line);border-radius:20px;padding:9px 14px;font:inherit;font-size:15px;max-height:120px;background:var(--paper);color:var(--ink)}
+  .cin button{border:0;background:none;color:#0a66c2;font:inherit;font-weight:700;font-size:15px;padding:9px 6px;cursor:pointer}
+  .cin button:disabled{color:var(--muted);opacity:.6;cursor:default}
+  .cfoot-login{width:100%;height:44px;border:0;border-radius:22px;background:var(--ink);color:var(--paper);font:inherit;font-weight:600;cursor:pointer}
+  #cauth{position:fixed;inset:0;z-index:6100;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px}
   #cauth[hidden]{display:none}
   #cauth .box{background:#fff;color:#222;width:100%;max-width:420px;border-radius:16px;box-shadow:0 10px 40px rgba(0,0,0,.25);overflow:hidden;font-family:Figtree,system-ui,sans-serif}
   #cauth header{position:relative;display:flex;align-items:center;justify-content:center;height:56px;border-bottom:1px solid #ebebeb;font-weight:700;font-size:16px}
@@ -95,7 +114,7 @@
     const { data } = await C.sb.from('profiles').select('*').eq('id', C.user.id).single();
     C.prof = data;
     if (C.prof && C.prof.role === 'admin') { const r = await C.sb.from('posts').select('id', { count: 'exact', head: true }).eq('status', 'pending'); C.pending = r.count || 0; }
-    refreshNav();
+    refreshNav(); syncDown();
     if (location.hash.includes('access_token')) { history.replaceState(null, '', location.pathname + location.search); toast('You’re signed in'); }
   }
   function refreshNav() { if (!dpanel.hidden) return; buildNav(); }
@@ -201,7 +220,7 @@
       if (error) { msg.innerHTML = `<p class="err">${error.code === '23505' ? 'That username is taken. Try another.' : esc(error.message)}</p>`; return; }
       Object.assign(C.prof, upd); msg.innerHTML = '<p class="ok">Saved.</p>';
     };
-    body.querySelector('#pOut').onclick = async () => { await C.sb.auth.signOut(); C.user = null; C.prof = null; toast('Logged out'); showNav(); buildNav(); };
+    body.querySelector('#pOut').onclick = async () => { await C.sb.auth.signOut(); C.user = null; C.prof = null; SYNC.ready = false; toast('Logged out'); showNav(); buildNav(); };
     const ga = body.querySelector('[data-goadd]'); if (ga) ga.onclick = e => { e.preventDefault(); openAdd(); };
     body.querySelectorAll('[data-cpost]').forEach(r => r.onclick = () => { const post = C.posts.find(x => x.id === r.dataset.cpost); if (post) { closeDrawer(); setMode(C.mode === 'archive' ? 'both' : C.mode); map.setView([post.lat, post.lon], 18); } });
   }
@@ -353,8 +372,9 @@
     d.innerHTML = `<a href="${PUB + esc(p.image_key)}" target="_blank" rel="noopener"><img src="${PUB + esc(p.thumb_key || p.image_key)}" alt="${esc(p.title)}"></a>
       <b>${esc(p.title)}</b><span>${[(KINDS.find(k => k[0] === p.kind) || [0, ''])[1], yr, p.place_label].filter(Boolean).map(esc).join(' · ')}</span>
       ${p.description ? `<p style="font-size:13px;margin:6px 0 0;line-height:1.45">${esc(p.description)}</p>` : ''}
-      <div class="row"><span>Shared by ${esc(by)}</span><button data-rep>Report</button></div>`;
+      <div class="row"><span>Shared by ${esc(by)}</span><span><button data-cm>Comments</button> · <button data-rep>Report</button></span></div>`;
     d.querySelector('[data-rep]').onclick = () => report('post', p.id);
+    d.querySelector('[data-cm]').onclick = () => openComments('post', p.id);
     return d;
   }
   async function report(type, id) {
@@ -364,6 +384,91 @@
     const r = await fetch(SB + '/rest/v1/reports', { method: 'POST', headers: { apikey: KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal', ...(C.sb && C.user ? { Authorization: 'Bearer ' + (await C.sb.auth.getSession()).data.session.access_token } : {}) }, body: JSON.stringify({ target_type: type, target_id: id, reason: map6[reason.trim()], reporter_id: C.user ? C.user.id : null }) });
     toast(r.ok ? 'Thanks, I’ll take a look' : 'Couldn’t send the report');
   }
+
+
+  // ---------- comments ----------
+  const ICC = '<svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>';
+  const ago = d => { const s = (Date.now() - new Date(d)) / 1000; if (s < 60) return 'now'; if (s < 3600) return Math.floor(s / 60) + 'm'; if (s < 86400) return Math.floor(s / 3600) + 'h'; if (s < 604800) return Math.floor(s / 86400) + 'd'; return new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: s > 31536000 ? 'numeric' : undefined }); };
+  const CMV = document.createElement('div'); CMV.id = 'ccm'; CMV.hidden = true; CMV.setAttribute('role', 'dialog'); CMV.setAttribute('aria-modal', 'true'); CMV.setAttribute('aria-label', 'Comments');
+  CMV.innerHTML = `<div class="sh"><header><span>Comments</span><button type="button" data-x aria-label="Close"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></header><div class="cl"></div><footer></footer></div>`;
+  document.body.appendChild(CMV);
+  CMV.addEventListener('click', e => { if (e.target === CMV || e.target.closest('[data-x]')) CMV.hidden = true; });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !CMV.hidden) { CMV.hidden = true; e.stopPropagation(); } }, true);
+  async function openComments(type, id) {
+    CMV.hidden = false; const list = CMV.querySelector('.cl'), foot = CMV.querySelector('footer');
+    list.innerHTML = '<p class="empty">Loading…</p>'; foot.innerHTML = '';
+    const rows = await rest(`comments?select=id,body,created_at,user_id,profiles(username,display_name)&target_type=eq.${type}&target_id=eq.${encodeURIComponent(id)}&status=eq.visible&order=created_at.asc&limit=500`);
+    const me = C.user ? C.user.id : null, admin = C.prof && C.prof.role === 'admin';
+    list.innerHTML = rows.length ? rows.map(r => { const n = r.profiles ? (r.profiles.display_name || r.profiles.username) : 'Someone'; return `<div class="cm" data-id="${r.id}"><div class="av">${esc((n || '?')[0].toUpperCase())}</div><div class="cmb"><div><b>${esc(n)}</b> <small>${ago(r.created_at)}</small></div><p>${esc(r.body)}</p><div class="cma">${r.user_id === me || admin ? '<button data-del>Delete</button>' : ''}${r.user_id !== me ? '<button data-rep>Report</button>' : ''}</div></div></div>`; }).join('') : '<p class="empty">No comments yet. Know something about this spot? Start the conversation.</p>';
+    if (!C.user && !hasSession()) { foot.innerHTML = `<button type="button" class="cfoot-login">Log in to comment</button>`; foot.querySelector('button').onclick = () => { CMV.hidden = true; openAuth('Log in to join the conversation.'); }; }
+    else {
+      foot.innerHTML = `<div class="cin"><textarea rows="1" maxlength="1000" placeholder="Add a comment…" aria-label="Add a comment"></textarea><button type="button" disabled>Post</button></div>`;
+      const ta = foot.querySelector('textarea'), btn = foot.querySelector('button');
+      ta.oninput = () => { btn.disabled = !ta.value.trim(); ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 120) + 'px'; };
+      btn.onclick = async () => {
+        await loadSB(); if (!C.user) { CMV.hidden = true; openAuth('Log in to join the conversation.'); return; }
+        btn.disabled = true;
+        const { error } = await C.sb.from('comments').insert({ user_id: C.user.id, target_type: type, target_id: String(id), body: ta.value.trim() });
+        if (error) { toast(/Slow down/.test(error.message) ? 'Slow down a little' : 'Couldn’t post that'); btn.disabled = false; return; }
+        openComments(type, id); CCOUNT.delete(type + id);
+      };
+    }
+    list.onclick = async e => {
+      const row = e.target.closest('.cm'); if (!row) return;
+      if (e.target.closest('[data-del]')) { if (!confirmDel()) return; await loadSB(); const { error } = await C.sb.from('comments').delete().eq('id', row.dataset.id); if (error && admin) await C.sb.from('comments').update({ status: 'hidden' }).eq('id', row.dataset.id); row.remove(); CCOUNT.delete(type + id); }
+      if (e.target.closest('[data-rep]')) report('comment', row.dataset.id);
+    };
+  }
+  function confirmDel() { return window.confirm('Delete this comment?'); }
+  const CCOUNT = new Map();
+  async function commentCount(type, id) {
+    const k = type + id; if (CCOUNT.has(k)) return CCOUNT.get(k);
+    const r = await fetch(`${SB}/rest/v1/comments?select=id&target_type=eq.${type}&target_id=eq.${encodeURIComponent(id)}&status=eq.visible`, { method: 'HEAD', headers: { apikey: KEY, Prefer: 'count=exact' } });
+    const n = parseInt((r.headers.get('content-range') || '/0').split('/')[1], 10) || 0; CCOUNT.set(k, n); return n;
+  }
+  // add a Comment button next to Like / Save / Share on every photo
+  if (typeof actsHTML === 'function') {
+    const _acts = actsHTML;
+    actsHTML = function (it, dark) {
+      const h = _acts(it, dark), key = 'archive' + it.u, n = CCOUNT.get(key);
+      if (!CCOUNT.has(key)) commentCount('archive', it.u).then(c => { if (c) document.querySelectorAll('[data-cmt]').forEach(b => { if (b.dataset.cmt === it.u) b.querySelector('span').textContent = 'Comments (' + c + ')'; }); });
+      return h.replace(/<\/div>$/, `<button class="act" data-cmt="${esc(it.u)}">${ICC}<span>${n ? 'Comments (' + n + ')' : 'Comment'}</span></button></div>`);
+    };
+  }
+  if (typeof doAct === 'function') {
+    const _do = doAct;
+    doAct = function (btn, it, ll) { if (btn.dataset.cmt !== undefined) { openComments('archive', it.u); return; } return _do(btn, it, ll); };
+  }
+
+  // ---------- keep saves and likes in sync with the account ----------
+  const SYNC = { ready: false };
+  const snapMeta = r => { if (!r) return null; const m = {}; for (const k of ['u', 'i', 't', 'l', 's', 'll']) if (r[k] !== undefined) m[k] = r[k]; return m; };
+  async function upsertReaction(kind, u, meta) {
+    let r = await C.sb.from('reactions').upsert({ user_id: C.user.id, kind, target_type: 'archive', target_id: u, meta }, { onConflict: 'user_id,kind,target_type,target_id' });
+    if (r.error && /meta/.test(r.error.message)) r = await C.sb.from('reactions').upsert({ user_id: C.user.id, kind, target_type: 'archive', target_id: u }, { onConflict: 'user_id,kind,target_type,target_id' });
+  }
+  async function syncDown() {
+    if (!C.user || SYNC.ready) return;
+    let r = await C.sb.from('reactions').select('kind,target_id,meta').eq('user_id', C.user.id).eq('target_type', 'archive');
+    if (r.error && /meta/.test(r.error.message)) r = await C.sb.from('reactions').select('kind,target_id').eq('user_id', C.user.id).eq('target_type', 'archive');
+    const server = r.data || [];
+    const local = { like: LIKES, save: SAVES }, have = new Set(server.map(x => x.kind + '|' + x.target_id));
+    let changed = false;
+    for (const x of server) { const o = local[x.kind]; if (o && !o[x.target_id] && x.meta && x.meta.u) { o[x.target_id] = x.meta; changed = true; } }
+    for (const kind of ['like', 'save']) for (const [u, v] of Object.entries(local[kind])) if (!have.has(kind + '|' + u)) upsertReaction(kind, u, snapMeta(v));
+    SYNC.last = { like: new Set(Object.keys(LIKES)), save: new Set(Object.keys(SAVES)) };
+    SYNC.ready = true;
+    if (changed) { _set('likes', LIKES); _set('saves', SAVES); if (dpanel.hidden) buildNav(); }
+  }
+  const _set = store.set.bind(store);
+  store.set = function (k, v) {
+    _set(k, v);
+    if (!SYNC.ready || !C.user || (k !== 'likes' && k !== 'saves')) return;
+    const kind = k === 'likes' ? 'like' : 'save', now = new Set(Object.keys(v)), prev = SYNC.last[kind];
+    for (const u of now) if (!prev.has(u)) upsertReaction(kind, u, snapMeta(v[u]));
+    for (const u of prev) if (!now.has(u)) C.sb.from('reactions').delete().match({ user_id: C.user.id, kind, target_type: 'archive', target_id: u });
+    SYNC.last[kind] = now;
+  };
 
   // ---------- admin ----------
   async function adminPanel(body, title) {
