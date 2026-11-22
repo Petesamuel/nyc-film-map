@@ -1,0 +1,12 @@
+{
+  "appId": "com.petesamuel.nycthenandnow",
+  "appName": "NYC Then and Now",
+  "webDir": "www",
+  "server": { "androidScheme": "https" },
+  "android": { "backgroundColor": "#1d1c1a" },
+  "ios": { "backgroundColor": "#1d1c1a", "contentInset": "never" },
+  "plugins": {
+    "SplashScreen": { "launchShowDuration": 1200, "launchAutoHide": true, "backgroundColor": "#1d1c1a", "showSpinner": false },
+    "StatusBar": { "overlaysWebView": true, "style": "LIGHT" }
+  }
+}
