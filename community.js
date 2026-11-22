@@ -84,6 +84,19 @@
   .cstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:12px 20px}
   .cstats div{background:var(--soft);border-radius:12px;padding:10px;display:grid;gap:2px}
   .cstats b{font-size:20px}.cstats span{font-size:12px;color:var(--muted)}.cstats small{font-size:11px;color:#1b6b36}
+  .cask{position:fixed;inset:0;z-index:7000;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;padding:0 8px calc(8px + env(safe-area-inset-bottom))}
+  @media (min-width:700px){.cask{align-items:center}}
+  .cask .box{width:100%;max-width:400px;display:grid;gap:8px}
+  .cask .box>h3,.cask .box>p,.cask .box>textarea,.cask .opts{background:var(--paper);color:var(--ink)}
+  .cask h3{margin:0;padding:16px 16px 0;border-radius:14px 14px 0 0;font-size:15px;text-align:center}
+  .cask h3+p,.cask h3+.opts{margin-top:-8px}
+  .cask p{margin:0;padding:6px 16px 14px;font-size:13px;color:var(--muted)!important;text-align:center;line-height:1.45}
+  .cask textarea{margin-top:-8px;border:0;border-top:1px solid var(--line);padding:12px 16px;font:inherit;font-size:15px;resize:none}
+  .cask .opts{margin-top:-8px;border-radius:0 0 14px 14px;overflow:hidden;display:grid}
+  .cask .box>.opts:first-child{margin-top:0;border-radius:14px}
+  .cask .opts button,.cask .cn{border:0;border-top:1px solid var(--line);background:var(--paper);color:#0a66c2;font:inherit;font-size:16px;height:50px;cursor:pointer}
+  .cask .opts button.dg{color:#c62828;font-weight:600}
+  .cask .cn{border:0;border-radius:14px;font-weight:600;color:var(--ink)}
   #ccm{position:fixed;inset:0;z-index:6000;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
   #ccm[hidden]{display:none}
   #ccm .sh{background:var(--paper);color:var(--ink);width:100%;max-width:520px;max-height:80vh;border-radius:16px 16px 0 0;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}
@@ -127,6 +140,30 @@
   @media (max-width:560px){#cauth{align-items:flex-end;padding:0}#cauth .box{max-width:none;border-radius:16px 16px 0 0;padding-bottom:env(safe-area-inset-bottom)}}
   @media (prefers-reduced-motion:reduce){#cmode button{transition:none}}
   </style>`);
+
+
+  // ---------- standard confirm / choice sheet (replaces browser confirm and prompt boxes) ----------
+  function ask(o) {
+    return new Promise(res => {
+      const el = document.createElement('div'); el.className = 'cask'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true');
+      const opts = o.options || [{ label: o.ok || 'OK', value: true, danger: o.danger }];
+      el.innerHTML = `<div class="box">${o.title ? `<h3>${esc(o.title)}</h3>` : ''}${o.message ? `<p>${esc(o.message)}</p>` : ''}
+        ${o.input ? `<textarea rows="2" maxlength="300" placeholder="${esc(o.input.placeholder || '')}">${esc(o.input.value || '')}</textarea>` : ''}
+        <div class="opts">${opts.map((x, i) => `<button type="button" data-i="${i}" class="${x.danger ? 'dg' : ''}">${esc(x.label)}</button>`).join('')}</div>
+        <button type="button" class="cn">Cancel</button></div>`;
+      document.body.appendChild(el);
+      const done = v => { el.remove(); document.removeEventListener('keydown', key, true); res(v); };
+      const key = e => { if (e.key === 'Escape') { e.stopPropagation(); done(null); } };
+      document.addEventListener('keydown', key, true);
+      el.addEventListener('click', e => {
+        if (e.target === el || e.target.closest('.cn')) return done(null);
+        const b = e.target.closest('[data-i]'); if (!b) return;
+        const v = opts[+b.dataset.i].value; const ta = el.querySelector('textarea');
+        done(o.input ? { value: v, text: ta.value.trim() } : v);
+      });
+      setTimeout(() => (el.querySelector('textarea') || el.querySelector('[data-i]')).focus(), 30);
+    });
+  }
 
   // ---------- supabase ----------
   function loadSB() {
@@ -254,7 +291,7 @@
     };
     body.insertAdjacentHTML('beforeend', `<div class="about"><p><button class="cdanger" id="pDel">Delete account</button></p></div>`);
     body.querySelector('#pDel').onclick = async () => {
-      if (!window.confirm('Delete your account? This permanently removes your profile, the photos you shared, your comments and your saved shots. This can\u2019t be undone.')) return;
+      if (!await ask({ title: 'Delete your account?', message: 'This permanently removes your profile, the photos you shared, your comments and your saved shots. This can\u2019t be undone.', ok: 'Delete account', danger: true })) return;
       try {
         const { data: files } = await C.sb.storage.from('uploads').list(C.user.id, { limit: 1000 });
         if (files && files.length) await C.sb.storage.from('uploads').remove(files.map(f => C.user.id + '/' + f.name));
@@ -270,7 +307,7 @@
     const ga = body.querySelector('[data-goadd]'); if (ga) ga.onclick = e => { e.preventDefault(); openAdd(); };
     body.querySelectorAll('[data-delpost]').forEach(b => b.onclick = async e => {
       e.stopPropagation();
-      if (!window.confirm('Delete this photo? This can\u2019t be undone.')) return;
+      if (!await ask({ title: 'Delete this photo?', message: 'It will be removed from the map. This can\u2019t be undone.', ok: 'Delete', danger: true })) return;
       const m = mine.find(x => x.id === b.dataset.delpost);
       const { error } = await C.sb.from('posts').delete().eq('id', m.id);
       if (error) { toast('Couldn\u2019t delete it'); return; }
@@ -435,10 +472,9 @@
     return d;
   }
   async function report(type, id) {
-    const reason = prompt('What’s wrong? Type a number:\n1 Wrong location\n2 Copyright\n3 Offensive\n4 Spam\n5 Privacy\n6 Something else');
-    const map6 = { 1: 'wrong_location', 2: 'copyright', 3: 'offensive', 4: 'spam', 5: 'privacy', 6: 'other' };
-    if (!map6[(reason || '').trim()]) return;
-    const r = await fetch(SB + '/rest/v1/reports', { method: 'POST', headers: { apikey: KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal', ...(C.sb && C.user ? { Authorization: 'Bearer ' + (await C.sb.auth.getSession()).data.session.access_token } : {}) }, body: JSON.stringify({ target_type: type, target_id: id, reason: map6[reason.trim()], reporter_id: C.user ? C.user.id : null }) });
+    const r0 = await ask({ title: 'Why are you reporting this?', message: 'Your report is anonymous to the person who posted it.', options: [['wrong_location', 'Wrong location'], ['copyright', 'It\u2019s my photo or copyrighted'], ['offensive', 'Offensive or hateful'], ['spam', 'Spam'], ['privacy', 'Shows private information'], ['other', 'Something else']].map(([value, label]) => ({ value, label })) });
+    if (!r0) return; const reason = r0;
+    const r = await fetch(SB + '/rest/v1/reports', { method: 'POST', headers: { apikey: KEY, 'Content-Type': 'application/json', Prefer: 'return=minimal', ...(C.sb && C.user ? { Authorization: 'Bearer ' + (await C.sb.auth.getSession()).data.session.access_token } : {}) }, body: JSON.stringify({ target_type: type, target_id: id, reason, reporter_id: C.user ? C.user.id : null }) });
     toast(r.ok ? 'Thanks, I’ll take a look' : 'Couldn’t send the report');
   }
 
@@ -473,12 +509,12 @@
     }
     list.onclick = async e => {
       const row = e.target.closest('.cm'); if (!row) return;
-      if (e.target.closest('[data-del]')) { if (!confirmDel()) return; await loadSB(); const { error } = await C.sb.from('comments').delete().eq('id', row.dataset.id); if (error && admin) await C.sb.from('comments').update({ status: 'hidden' }).eq('id', row.dataset.id); row.remove(); CCOUNT.delete(type + id); }
+      if (e.target.closest('[data-del]')) { if (!await confirmDel()) return; await loadSB(); const { error } = await C.sb.from('comments').delete().eq('id', row.dataset.id); if (error && admin) await C.sb.from('comments').update({ status: 'hidden' }).eq('id', row.dataset.id); row.remove(); CCOUNT.delete(type + id); }
       if (e.target.closest('[data-rep]')) report('comment', row.dataset.id);
-      const bk = e.target.closest('[data-blk]'); if (bk && window.confirm('Block this person? You won\u2019t see their comments or photos anymore.')) { BLK.add(bk.dataset.blk); openComments(type, id); if (C.layer) drawPosts(); toast('Blocked'); }
+      const bk = e.target.closest('[data-blk]'); if (bk && await ask({ title: 'Block this person?', message: 'You won\u2019t see their comments or photos anymore.', ok: 'Block', danger: true })) { BLK.add(bk.dataset.blk); openComments(type, id); if (C.layer) drawPosts(); toast('Blocked'); }
     };
   }
-  function confirmDel() { return window.confirm('Delete this comment?'); }
+  function confirmDel() { return ask({ title: 'Delete this comment?', ok: 'Delete', danger: true }); }
   const CCOUNT = new Map();
   async function commentCount(type, id) {
     const k = type + id; if (CCOUNT.has(k)) return CCOUNT.get(k);
@@ -549,7 +585,7 @@
       <p class="pfoot"><button data-rep>Report this profile</button> \u00b7 <button data-blk>Block</button></p>`;
     b.querySelectorAll('[data-go]').forEach(el => el.onclick = () => { const x = ps.find(q => q.id === el.dataset.go); PRV.hidden = true; if (C.mode === 'archive') setMode('both'); map.setView([x.lat, x.lon], 18); });
     b.querySelector('[data-rep]').onclick = () => report('profile', uid);
-    b.querySelector('[data-blk]').onclick = () => { if (!window.confirm('Block this person? You won\u2019t see their comments or photos anymore.')) return; BLK.add(uid); PRV.hidden = true; if (C.layer) drawPosts(); toast('Blocked'); };
+    b.querySelector('[data-blk]').onclick = async () => { if (!await ask({ title: 'Block this person?', message: 'You won\u2019t see their comments or photos anymore.', ok: 'Block', danger: true })) return; BLK.add(uid); PRV.hidden = true; if (C.layer) drawPosts(); toast('Blocked'); };
   }
 
   // ---------- admin ----------
@@ -583,7 +619,7 @@
         const id = card.dataset.id, post = (pend.data || []).find(x => x.id === id);
         if (e.target.closest('[data-see]')) { closeDrawer(); map.setView([post.lat, post.lon], 18); return; }
         if (e.target.closest('[data-ap]')) { const { error } = await C.sb.from('posts').update({ status: 'approved', approved_at: new Date().toISOString() }).eq('id', id); if (error) return toast(error.message); card.remove(); C.loaded = false; if (C.layer) C.layer.clearLayers(); toast('Approved, it’s live'); }
-        if (e.target.closest('[data-rj]')) { const note = prompt('Reason (the uploader sees this):', 'Not a New York City photo') || null; const { error } = await C.sb.from('posts').update({ status: 'rejected', mod_note: note }).eq('id', id); if (error) return toast(error.message); card.remove(); toast('Rejected'); }
+        if (e.target.closest('[data-rj]')) { const a = await ask({ title: 'Reject this photo?', message: 'Pick a reason. The uploader sees it.', options: ['Not in New York City', 'Wrong or unclear location', 'Not their photo to share', 'Low quality or duplicate', 'Breaks the rules'].map(v => ({ label: v, value: v })), input: { placeholder: 'Add a note (optional)' } }); if (!a) return; const note = a.text ? a.value + '. ' + a.text : a.value; const { error } = await C.sb.from('posts').update({ status: 'rejected', mod_note: note }).eq('id', id); if (error) return toast(error.message); card.remove(); toast('Rejected'); }
         C.pending = body.querySelectorAll('.cadm').length; return;
       }
       const d = e.target.closest('[data-done]');

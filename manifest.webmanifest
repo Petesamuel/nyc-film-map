@@ -1,0 +1,15 @@
+{
+  "name": "NYC Then and Now",
+  "short_name": "Then and Now",
+  "description": "Old photos and film locations of New York City, pinned to the corner where they were taken.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#1d1c1a",
+  "theme_color": "#1d1c1a",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
