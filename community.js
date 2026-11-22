@@ -36,6 +36,10 @@
   #cmode{position:fixed;z-index:1000;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom));display:flex;background:var(--paper);border-radius:20px;box-shadow:var(--shadow);padding:3px}
   #cmode button{border:0;background:none;font:600 13px Figtree,sans-serif;color:var(--muted);height:32px;padding:0 14px;border-radius:16px;cursor:pointer}
   #cmode button.on{background:var(--ink);color:var(--paper)}
+  .cpopw .leaflet-popup-content-wrapper{background:var(--paper);color:var(--ink)}
+  .cpopw .leaflet-popup-content{width:min(calc(100vw - 48px),320px)!important}
+  .cpop{padding:12px}
+  .cpop .row{gap:10px}
   .cpop img{width:100%;max-height:220px;object-fit:cover;border-radius:8px;display:block;background:var(--soft)}
   .cpop b{display:block;margin:8px 0 2px;font-size:14px}.cpop span{font-size:12.5px;color:var(--muted)}
   .cpop .row{display:flex;justify-content:space-between;margin-top:8px;font-size:12.5px}
@@ -55,6 +59,24 @@
   .cfab:active{transform:scale(.96)}
   .cfab:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
   .acts{flex-wrap:wrap}
+  #cprof{position:fixed;inset:0;z-index:6000;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
+  #cprof[hidden]{display:none}
+  #cprof .sh{background:var(--paper);color:var(--ink);width:100%;max-width:520px;max-height:85vh;border-radius:16px 16px 0 0;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}
+  @media (min-width:700px){#cprof{align-items:center}#cprof .sh{border-radius:16px;max-height:75vh}}
+  #cprof header{display:flex;align-items:center;justify-content:center;position:relative;height:50px;border-bottom:1px solid var(--line);font-weight:700}
+  #cprof header button{position:absolute;right:8px;top:7px;width:36px;height:36px;border:0;background:none;color:var(--ink);border-radius:50%;cursor:pointer;display:grid;place-items:center}
+  #cprof .pb{overflow:auto;padding:16px}
+  .ph{display:flex;gap:14px;align-items:center}.ph b{display:block;font-size:18px}.ph small{color:var(--muted);font-size:13px}
+  .av.lg{width:64px;height:64px;font-size:26px;border-radius:50%;background:var(--soft);display:grid;place-items:center;font-weight:700;flex:none}
+  .pbio{font-size:14px;line-height:1.5;margin:12px 0 0;white-space:pre-wrap}
+  .pst{font-size:13px;color:var(--muted);margin:12px 0}
+  .pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px}
+  .pgrid button{border:0;padding:0;aspect-ratio:1;background:var(--soft);cursor:pointer;overflow:hidden}
+  .pgrid img{width:100%;height:100%;object-fit:cover;display:block}
+  .pfoot{text-align:center;margin:16px 0 0}.pfoot button,.cpop [data-prof]{border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer}
+  .pfoot button{color:var(--muted);font-size:12.5px;text-decoration:underline}
+  .cpop [data-prof]{font-weight:600;text-decoration:none!important;color:var(--ink)!important}
+  .row2 .rm{margin-left:auto;flex:none}
   #ccm{position:fixed;inset:0;z-index:6000;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
   #ccm[hidden]{display:none}
   #ccm .sh{background:var(--paper);color:var(--ink);width:100%;max-width:520px;max-height:80vh;border-radius:16px 16px 0 0;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}
@@ -201,7 +223,7 @@
     title.textContent = C.user ? 'Your account' : 'Sign in';
     if (!C.user) { signInForm(body); return; }
     const p = C.prof || {};
-    const { data: mine } = await C.sb.from('posts').select('id,title,status,thumb_key,image_key,created_at,mod_note').eq('user_id', C.user.id).order('created_at', { ascending: false });
+    const { data: mine } = await C.sb.from('posts').select('id,title,status,thumb_key,image_key,created_at,mod_note,lat,lon').eq('user_id', C.user.id).order('created_at', { ascending: false });
     body.innerHTML = `<div class="cf">
       <p class="note">Logged in as ${esc(C.user.email || '')}</p>
       <label>Username <small>3 to 24 lowercase letters, numbers or _</small><input type="text" id="pUser" value="${esc(p.username || '')}" autocapitalize="off"></label>
@@ -211,7 +233,7 @@
       <div class="row"><button class="btn" id="pSave">Save profile</button><button class="btn ghost" id="pOut">Log out</button></div>
       <div id="pMsg"></div></div>
       <div class="about" style="padding-top:0"><p><b>Your photos</b></p></div>
-      ${(mine || []).length ? mine.map(m => `<div class="row2" data-cpost="${m.id}"><img src="${PUB + esc(m.thumb_key || m.image_key)}" alt=""><div><b>${esc(m.title)}<span class="cpill ${m.status}">${{ pending: 'In review', approved: 'Live', rejected: 'Not approved', removed: 'Removed' }[m.status]}</span></b><span>${new Date(m.created_at).toLocaleDateString()}${m.mod_note ? ' · ' + esc(m.mod_note) : ''}</span></div></div>`).join('') : '<p class="empty">Photos you add show up here. <a href="#" data-goadd>Add your first photo</a>.</p>'}`;
+      ${(mine || []).length ? mine.map(m => `<div class="row2" data-cpost="${m.id}"><img src="${PUB + esc(m.thumb_key || m.image_key)}" alt=""><div><b>${esc(m.title)}<span class="cpill ${m.status}">${{ pending: 'In review', approved: 'Live', rejected: 'Not approved', removed: 'Removed' }[m.status]}</span></b><span>${new Date(m.created_at).toLocaleDateString()}${m.mod_note ? ' · ' + esc(m.mod_note) : ''}</span></div><button class="rm" data-delpost="${m.id}" aria-label="Delete photo">${IC.x}</button></div>`).join('') : '<p class="empty">Photos you add show up here. <a href="#" data-goadd>Add your first photo</a>.</p>'}`;
     body.querySelector('#pSave').onclick = async () => {
       const u = body.querySelector('#pUser').value.trim().toLowerCase(), msg = body.querySelector('#pMsg');
       if (!/^[a-z0-9_]{3,24}$/.test(u)) { msg.innerHTML = '<p class="err">Usernames are 3 to 24 lowercase letters, numbers or underscores.</p>'; return; }
@@ -222,7 +244,17 @@
     };
     body.querySelector('#pOut').onclick = async () => { await C.sb.auth.signOut(); C.user = null; C.prof = null; SYNC.ready = false; toast('Logged out'); showNav(); buildNav(); };
     const ga = body.querySelector('[data-goadd]'); if (ga) ga.onclick = e => { e.preventDefault(); openAdd(); };
-    body.querySelectorAll('[data-cpost]').forEach(r => r.onclick = () => { const post = C.posts.find(x => x.id === r.dataset.cpost); if (post) { closeDrawer(); setMode(C.mode === 'archive' ? 'both' : C.mode); map.setView([post.lat, post.lon], 18); } });
+    body.querySelectorAll('[data-delpost]').forEach(b => b.onclick = async e => {
+      e.stopPropagation();
+      if (!window.confirm('Delete this photo? This can\u2019t be undone.')) return;
+      const m = mine.find(x => x.id === b.dataset.delpost);
+      const { error } = await C.sb.from('posts').delete().eq('id', m.id);
+      if (error) { toast('Couldn\u2019t delete it'); return; }
+      await C.sb.storage.from('uploads').remove([m.image_key, m.thumb_key].filter(Boolean));
+      C.posts = C.posts.filter(x => x.id !== m.id); if (C.layer) drawPosts();
+      b.closest('.row2').remove(); toast('Photo deleted');
+    });
+    body.querySelectorAll('[data-cpost]').forEach(r => r.onclick = () => { const m0 = (mine || []).find(x => x.id === r.dataset.cpost); const post = C.posts.find(x => x.id === r.dataset.cpost) || m0; if (post) { closeDrawer(); setMode(C.mode === 'archive' ? 'both' : C.mode); map.setView([post.lat, post.lon], 18); } });
   }
 
   // ---------- add a photo ----------
@@ -350,7 +382,7 @@
   }
   async function loadPosts() {
     if (C.loaded) return; C.loaded = true;
-    C.posts = await rest('posts?select=id,kind,title,description,year_taken,year_approx,lat,lon,place_label,image_key,thumb_key,created_at,profiles(username,display_name)&status=eq.approved&order=created_at.desc&limit=5000');
+    C.posts = await rest('posts?select=id,user_id,kind,title,description,year_taken,year_approx,lat,lon,place_label,image_key,thumb_key,created_at,profiles(username,display_name)&status=eq.approved&order=created_at.desc&limit=5000');
     drawPosts();
   }
   function drawPosts() {
@@ -372,9 +404,10 @@
     d.innerHTML = `<a href="${PUB + esc(p.image_key)}" target="_blank" rel="noopener"><img src="${PUB + esc(p.thumb_key || p.image_key)}" alt="${esc(p.title)}"></a>
       <b>${esc(p.title)}</b><span>${[(KINDS.find(k => k[0] === p.kind) || [0, ''])[1], yr, p.place_label].filter(Boolean).map(esc).join(' · ')}</span>
       ${p.description ? `<p style="font-size:13px;margin:6px 0 0;line-height:1.45">${esc(p.description)}</p>` : ''}
-      <div class="row"><span>Shared by ${esc(by)}</span><span><button data-cm>Comments</button> · <button data-rep>Report</button></span></div>`;
+      <div class="row"><span>Shared by <button data-prof>${esc(by)}</button></span><span><button data-cm>Comments</button> · <button data-rep>Report</button></span></div>`;
     d.querySelector('[data-rep]').onclick = () => report('post', p.id);
     d.querySelector('[data-cm]').onclick = () => openComments('post', p.id);
+    d.querySelector('[data-prof]').onclick = () => openProfile(p.user_id);
     return d;
   }
   async function report(type, id) {
@@ -469,6 +502,28 @@
     for (const u of prev) if (!now.has(u)) C.sb.from('reactions').delete().match({ user_id: C.user.id, kind, target_type: 'archive', target_id: u });
     SYNC.last[kind] = now;
   };
+
+
+  // ---------- public profiles ----------
+  const PRV = document.createElement('div'); PRV.id = 'cprof'; PRV.hidden = true; PRV.setAttribute('role', 'dialog'); PRV.setAttribute('aria-modal', 'true'); PRV.setAttribute('aria-label', 'Profile');
+  PRV.innerHTML = `<div class="sh"><header><span>Profile</span><button type="button" data-x aria-label="Close"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></header><div class="pb"></div></div>`;
+  document.body.appendChild(PRV);
+  PRV.addEventListener('click', e => { if (e.target === PRV || e.target.closest('[data-x]')) PRV.hidden = true; });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !PRV.hidden) { PRV.hidden = true; e.stopPropagation(); } }, true);
+  async function openProfile(uid) {
+    if (!uid) return;
+    PRV.hidden = false; const b = PRV.querySelector('.pb'); b.innerHTML = '<p class="empty">Loading…</p>';
+    const [pr, ps] = await Promise.all([rest(`profiles?select=username,display_name,bio,neighborhood,created_at&id=eq.${uid}`), rest(`posts?select=id,title,thumb_key,image_key,lat,lon,year_taken&user_id=eq.${uid}&status=eq.approved&order=created_at.desc&limit=300`)]);
+    const p = pr[0]; if (!p) { b.innerHTML = '<p class="empty">This profile isn’t available.</p>'; return; }
+    const name = p.display_name || p.username;
+    b.innerHTML = `<div class="ph"><div class="av lg">${esc(name[0].toUpperCase())}</div><div><b>${esc(name)}</b><small>@${esc(p.username)}${p.neighborhood ? ' · ' + esc(p.neighborhood) : ''}</small></div></div>
+      ${p.bio ? `<p class="pbio">${esc(p.bio)}</p>` : ''}
+      <div class="pst"><b>${ps.length}</b> ${ps.length === 1 ? 'photo' : 'photos'} · Joined ${new Date(p.created_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</div>
+      ${ps.length ? `<div class="pgrid">${ps.map(x => `<button data-go="${x.id}" aria-label="${esc(x.title)}"><img src="${PUB + esc(x.thumb_key || x.image_key)}" alt="" loading="lazy"></button>`).join('')}</div>` : '<p class="empty">No photos yet.</p>'}
+      <p class="pfoot"><button data-rep>Report this profile</button></p>`;
+    b.querySelectorAll('[data-go]').forEach(el => el.onclick = () => { const x = ps.find(q => q.id === el.dataset.go); PRV.hidden = true; if (C.mode === 'archive') setMode('both'); map.setView([x.lat, x.lon], 18); });
+    b.querySelector('[data-rep]').onclick = () => report('profile', uid);
+  }
 
   // ---------- admin ----------
   async function adminPanel(body, title) {
