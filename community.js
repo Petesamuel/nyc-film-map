@@ -5,6 +5,9 @@
   const SB = 'https://iurancbmhdizoafdhctq.supabase.co';
   const KEY = 'sb_publishable_bdXBpE0UULjIjYDNrHg83g_DsW0WUsb';
   const PUB = SB + '/storage/v1/object/public/uploads/';
+  const NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  const APP_CB = 'com.petesamuel.nycthenandnow://auth';
+  const backTo = () => NATIVE ? APP_CB : location.origin + location.pathname;
   const C = { sb: null, user: null, prof: null, posts: [], layer: null, mode: 'archive', pending: 0 };
   const ADD = { kind: '', file: null, preview: '', title: '', year: '', approx: false, desc: '', rights: '', place: '', ll: null, method: '' };
   const KINDS = [['p', 'Photo'], ['c', 'Postcard'], ['i', 'Illustration or print'], ['m', 'Map'], ['b', 'Blueprint or plan'], ['d', 'Document']];
@@ -196,15 +199,16 @@
     AUTH.querySelector('[data-x]').onclick = closeAuth;
     AUTH.querySelector('[data-google]').onclick = async () => {
       await loadSB();
-      const { error } = await C.sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
-      if (error) AUTH.querySelector('#cErr').textContent = error.message;
+      const { data, error } = await C.sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: backTo(), skipBrowserRedirect: NATIVE } });
+      if (error) { AUTH.querySelector('#cErr').textContent = error.message; return; }
+      if (NATIVE && data && data.url) window.Capacitor.Plugins.Browser.open({ url: data.url, presentationStyle: 'popover' });
     };
     const go = async () => {
       const email = AUTH.querySelector('#cEmail').value.trim(), errEl = AUTH.querySelector('#cErr'), btn = AUTH.querySelector('[data-email]');
       if (!/^\S+@\S+\.\S+$/.test(email)) { errEl.textContent = 'Enter a valid email address.'; return; }
       btn.disabled = true; errEl.textContent = '';
       await loadSB();
-      const { error } = await C.sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
+      const { error } = await C.sb.auth.signInWithOtp({ email, options: { emailRedirectTo: backTo() } });
       btn.disabled = false;
       if (error) { errEl.textContent = /rate limit/i.test(error.message) ? 'We can\u2019t send more emails right now. Try Continue with Google, or try again later.' : error.message; return; }
       AUTH.querySelector('.in').innerHTML = `<h2>Check your email</h2><p>We sent a sign in link to <b style="color:#222">${esc(email)}</b>. Open it on this device to finish. It can take a minute, and might land in spam.</p><button type="button" class="pri" data-done>Got it</button><p class="fine"><button type="button" class="lnk" data-back>Use a different email</button></p>`;
@@ -560,6 +564,20 @@
       const d = e.target.closest('[data-done]');
       if (d) { const t = d.dataset.done, st = t === 'reports' ? 'resolved' : 'done'; const { error } = await C.sb.from(t).update({ status: st }).eq('id', d.dataset.id); if (error) return toast(error.message); d.closest('.cmsg').remove(); }
     };
+  }
+
+  // ---------- phone app: finish sign in when Google or the email link sends people back ----------
+  if (NATIVE && window.Capacitor.Plugins.App) {
+    window.Capacitor.Plugins.App.addListener('appUrlOpen', async ({ url }) => {
+      if (!url || !url.startsWith(APP_CB)) return;
+      try { window.Capacitor.Plugins.Browser.close(); } catch (e) {}
+      await loadSB();
+      const frag = new URLSearchParams(url.split('#')[1] || ''), q = new URLSearchParams((url.split('?')[1] || '').split('#')[0]);
+      let r = {};
+      if (frag.get('access_token')) r = await C.sb.auth.setSession({ access_token: frag.get('access_token'), refresh_token: frag.get('refresh_token') });
+      else if (q.get('code')) r = await C.sb.auth.exchangeCodeForSession(q.get('code'));
+      if (r.error) toast('Couldn\u2019t finish logging in'); else { closeAuth(); toast('You\u2019re logged in'); }
+    });
   }
 
   // ---------- start ----------
