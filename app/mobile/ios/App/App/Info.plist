@@ -12,15 +12,15 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>com.petesamuel.nycthenandnow</string>
+			<string>com.petesamuel.pastpost</string>
 			<key>CFBundleURLSchemes</key>
-			<array><string>com.petesamuel.nycthenandnow</string></array>
+			<array><string>com.petesamuel.pastpost</string></array>
 		</dict>
 	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>NYC Then and Now</string>
+        <string>PastPost</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

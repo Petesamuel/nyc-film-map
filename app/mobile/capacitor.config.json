@@ -1,6 +1,6 @@
 {
-  "appId": "com.petesamuel.nycthenandnow",
-  "appName": "NYC Then and Now",
+  "appId": "com.petesamuel.pastpost",
+  "appName": "PastPost",
   "webDir": "www",
   "server": { "androidScheme": "https" },
   "android": { "backgroundColor": "#1d1c1a" },

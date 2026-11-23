@@ -1,6 +1,6 @@
 {
-  "name": "NYC Then and Now",
-  "short_name": "Then and Now",
+  "name": "PastPost",
+  "short_name": "PastPost",
   "description": "Old photos and film locations of New York City, pinned to the corner where they were taken.",
   "start_url": "./",
   "scope": "./",

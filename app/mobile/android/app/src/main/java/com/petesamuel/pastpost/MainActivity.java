@@ -1,4 +1,4 @@
-package com.petesamuel.nycthenandnow;
+package com.petesamuel.pastpost;
 
 import com.getcapacitor.BridgeActivity;
 

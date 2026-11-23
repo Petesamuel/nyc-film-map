@@ -1,4 +1,4 @@
-/* NYC Then and Now: community layer.
+/* PastPost: community layer.
    Sign in (email link), profile, add a photo, community pins, reporting, and an admin review queue.
    Loaded after the main map script; uses its globals (map, L, dnav, dpanel, buildNav, openPanel, IC, esc, toast, closeDrawer, openDrawer). */
 (function () {
@@ -6,7 +6,7 @@
   const KEY = 'sb_publishable_bdXBpE0UULjIjYDNrHg83g_DsW0WUsb';
   const PUB = SB + '/storage/v1/object/public/uploads/';
   const NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
-  const APP_CB = 'com.petesamuel.nycthenandnow://auth';
+  const APP_CB = 'com.petesamuel.pastpost://auth';
   const backTo = () => NATIVE ? APP_CB : location.origin + location.pathname;
   const C = { sb: null, user: null, prof: null, posts: [], layer: null, mode: 'archive', pending: 0 };
   const ADD = { kind: '', file: null, preview: '', title: '', year: '', approx: false, desc: '', rights: '', place: '', ll: null, method: '' };
@@ -229,7 +229,7 @@
     }
     AUTH.hidden = false;
     AUTH.innerHTML = `<div class="box"><header><button type="button" data-x aria-label="Close">${XICO}</button>Log in or sign up</header><div class="in">
-      <h2>Welcome to NYC Then and Now</h2>
+      <h2>Welcome to PastPost</h2>
       <p>${why || 'Log in to share your own photos of the city and see them on the map.'}</p>
       <button type="button" class="gbtn-g" data-google>${GLOGO}<span>Continue with Google</span></button>
       <div class="or">or</div>
@@ -334,7 +334,7 @@
       <p class="note" id="aWhere">${ADD.ll ? `Pinned at ${ADD.ll[0].toFixed(5)}, ${ADD.ll[1].toFixed(5)}. <a href="#" id="aAdjust">Adjust on the map</a>` : 'No spot chosen yet.'}</p>
       <label>Story or details <small>optional</small><textarea id="aDesc" maxlength="2000" placeholder="Who took it, what was going on, what's there now">${esc(ADD.desc)}</textarea></label>
       <label>Whose photo is this?<select id="aRights"><option value="">Choose one</option>${RIGHTS.map(([v, l]) => `<option value="${v}" ${ADD.rights === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
-      <p class="note">Only share photos you have the right to share. By submitting you let NYC Then and Now show it on the map, credited to your username. You can delete it any time.</p>
+      <p class="note">Only share photos you have the right to share. By submitting you let PastPost show it on the map, credited to your username. You can delete it any time.</p>
       <button class="btn" id="aSend">Submit for review</button>
       <div id="aMsg"></div></div>`;
     const $ = s => body.querySelector(s);
