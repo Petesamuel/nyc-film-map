@@ -180,7 +180,7 @@
     const { data } = await C.sb.from('profiles').select('*').eq('id', C.user.id).single();
     C.prof = data;
     if (C.prof && C.prof.role === 'admin') { const r = await C.sb.from('posts').select('id', { count: 'exact', head: true }).eq('status', 'pending'); C.pending = r.count || 0; }
-    refreshNav(); syncDown();
+    refreshNav(); syncDown(); notifyStatus();
     if (location.hash.includes('access_token')) { history.replaceState(null, '', location.pathname + location.search); toast('You’re signed in'); }
   }
   function refreshNav() { if (!dpanel.hidden) return; buildNav(); }
@@ -586,6 +586,22 @@
     b.querySelectorAll('[data-go]').forEach(el => el.onclick = () => { const x = ps.find(q => q.id === el.dataset.go); PRV.hidden = true; if (C.mode === 'archive') setMode('both'); map.setView([x.lat, x.lon], 18); });
     b.querySelector('[data-rep]').onclick = () => report('profile', uid);
     b.querySelector('[data-blk]').onclick = async () => { if (!await ask({ title: 'Block this person?', message: 'You won\u2019t see their comments or photos anymore.', ok: 'Block', danger: true })) return; BLK.add(uid); PRV.hidden = true; if (C.layer) drawPosts(); toast('Blocked'); };
+  }
+
+
+  // ---------- tell uploaders when a photo goes live or is declined ----------
+  async function notifyStatus() {
+    if (!C.user) return;
+    const key = 'cseen_' + C.user.id; let seen = {};
+    try { seen = JSON.parse(localStorage.getItem(key) || '{}'); } catch (e) {}
+    const { data } = await C.sb.from('posts').select('id,title,status').eq('user_id', C.user.id).in('status', ['approved', 'rejected']);
+    const fresh = (data || []).filter(p => seen[p.id] !== p.status);
+    const first = !Object.keys(seen).length && !localStorage.getItem(key);
+    (data || []).forEach(p => seen[p.id] = p.status);
+    try { localStorage.setItem(key, JSON.stringify(seen)); } catch (e) {}
+    if (first || !fresh.length) return;
+    const live = fresh.filter(p => p.status === 'approved'), no = fresh.filter(p => p.status === 'rejected');
+    setTimeout(() => toast(live.length ? (live.length === 1 ? `\u201c${live[0].title}\u201d is live on the map` : `${live.length} of your photos are live on the map`) : (no.length === 1 ? `\u201c${no[0].title}\u201d wasn\u2019t approved. See Your account` : `${no.length} photos weren\u2019t approved. See Your account`)), 1500);
   }
 
   // ---------- admin ----------
