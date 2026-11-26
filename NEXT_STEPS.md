@@ -59,3 +59,8 @@
 - Stripe sandbox tip link made: https://buy.stripe.com/test_4gMbJ22P0cZkaEO6nK87K00 ($10 suggested, $1 to $500, returns to /support/thanks/).
 - Site code ready: paste the live link into SUPPORT_LIVE in pages/build_pages.py and deploy; Support page, About line, privacy note and a "Support PastPost" map menu item all turn on (hidden in the iOS app).
 - Waiting on Pete: Stripe verification, buying pastpostnyc.com ($11.17/yr, still free), WHM login for the backup install, Apple and Google accounts.
+
+## Later: replace personal address on the DMCA registration
+- Pete is registering the DMCA designated agent (dmca.copyright.gov, $6, renew every 3 years) with his personal mailing address for now.
+- Later: get a virtual mailbox or business street address, then (1) amend the designation at dmca.copyright.gov ($6) and (2) update DMCA_ADDRESS in pages/build_pages.py and redeploy.
+- Waiting on Pete to send the agent mailing address so it can go into DMCA_ADDRESS on the Terms page (required on the site).
