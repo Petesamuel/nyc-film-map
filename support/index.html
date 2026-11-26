@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Support the map | PastPost</title>
-<meta name="description" content="Help keep the PastPost map free and growing.">
-<meta property="og:title" content="Support the map | PastPost">
-<meta property="og:description" content="Help keep the PastPost map free and growing.">
+<title>Support PastPost | PastPost</title>
+<meta name="description" content="Help keep PastPost free for everyone.">
+<meta property="og:title" content="Support PastPost | PastPost">
+<meta property="og:description" content="Help keep PastPost free for everyone.">
 <meta property="og:image" content="https://petesamuel.github.io/nyc-film-map/icons/og.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="../pages.css">
@@ -14,11 +14,35 @@
 <header class="top"><div class="in"><a class="back" href="../"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Back to the map</a><nav aria-label="Site pages"><a href="../about/">About</a><a href="../feedback/">Feedback</a><a href="../takedown/">Request removal</a><a href="../terms/">Terms</a><a href="../privacy/">Privacy</a></nav></div></header>
 <main>
 
-<h1>Support the map</h1>
-<p class="lede">The map is free, has no ads, and always will. If it brought back a memory or helped you find a spot, you can chip in.</p>
-<p>Support pays for hosting and storage, and for the time it takes to place thousands of photos on the right corner. It also funds what's next: a phone app and a way for you to add your own photos of the city.</p>
-<p><a class="btnlink" href="#" target="_blank" rel="noopener">Chip in any amount</a></p>
+<h1>Support PastPost</h1>
+<p class="lede">I want PastPost to stay free and open to everyone: researchers, historians, students, filmmakers, and anyone who just loves the old city. No ads, no paywall, nothing to sign up for to look around.</p>
+<p>Keeping it that way still costs money. The servers, photo storage, and the time spent placing thousands of images on the right corner all add up. If the map helped you discover something, any amount helps keep it running and growing.</p>
+<div class="give">
+  <div class="seg" role="tablist" aria-label="How often">
+    <button type="button" role="tab" aria-selected="true" data-mode="once">One time</button>
+    <button type="button" role="tab" aria-selected="false" data-mode="monthly">Monthly</button>
+  </div>
+  <div class="gpane" data-pane="once">
+    <div class="amts">
+      <a class="amt" href="#" target="_blank" rel="noopener">$1</a>
+      <a class="amt on" href="#" target="_blank" rel="noopener">$5</a>
+      <a class="amt" href="#" target="_blank" rel="noopener">$10</a>
+      <a class="amt" href="#" target="_blank" rel="noopener">$20</a>
+      <a class="amt" href="#" target="_blank" rel="noopener">Other</a>
+    </div>
+    <p><a class="btnlink" id="giveGo" href="#" target="_blank" rel="noopener">Continue to payment</a></p>
+  </div>
+  <div class="gpane" data-pane="monthly" hidden>
+    <p>Choose any amount per month at checkout, starting at $1. You can cancel anytime from the link in your receipt.</p>
+    <p><a class="btnlink" href="#" target="_blank" rel="noopener">Give monthly</a></p>
+  </div>
+</div>
 <p class="small">Payments are handled securely by Stripe. I never see your card details. This is a personal project, not a charity, so contributions aren't tax deductible.</p>
+<script>
+(function(){var g=document.querySelector('.give');if(!g)return;var go=g.querySelector('#giveGo');
+g.querySelectorAll('.amt').forEach(function(a){a.addEventListener('click',function(e){e.preventDefault();g.querySelectorAll('.amt').forEach(function(x){x.classList.remove('on')});a.classList.add('on');go.href=a.href;go.textContent=a.textContent==='Other'?'Continue and choose amount':'Continue to payment'})});
+g.querySelectorAll('.seg button').forEach(function(b){b.addEventListener('click',function(){g.querySelectorAll('.seg button').forEach(function(x){x.setAttribute('aria-selected',x===b)});g.querySelectorAll('.gpane').forEach(function(p){p.hidden=p.dataset.pane!==b.dataset.mode})})});})();
+</script>
 
 <footer><a href="../about/">About</a><a href="../feedback/">Feedback</a><a href="../takedown/">Request removal</a><a href="../terms/">Terms</a><a href="../privacy/">Privacy</a></footer>
 </main>
