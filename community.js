@@ -5,6 +5,7 @@
   const SB = 'https://iurancbmhdizoafdhctq.supabase.co';
   const KEY = 'sb_publishable_bdXBpE0UULjIjYDNrHg83g_DsW0WUsb';
   const PUB = SB + '/storage/v1/object/public/uploads/';
+  const SUPPORT_ON = false; // set by build_pages.py when a Stripe link exists
   const NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
   const APP_CB = 'com.petesamuel.pastpost://auth';
   const backTo = () => NATIVE ? APP_CB : location.origin + location.pathname;
@@ -199,6 +200,8 @@
       ${C.prof && C.prof.role === 'admin' ? `<button class="ditem" data-p="admin">${ICS}Review and inbox<span class="n">${C.pending || ''}</span></button>` : ''}
       <div class="dsep"></div>`;
     dnav.insertAdjacentHTML('afterbegin', top);
+    const IOS = NATIVE && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === 'ios';
+    if (SUPPORT_ON && !IOS) dnav.insertAdjacentHTML('beforeend', `<div class="dsep"></div><a class="ditem" href="support/">${IC.heart || ''}Support PastPost</a>`);
   };
   const _openPanel = openPanel;
   openPanel = function (p) {
