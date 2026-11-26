@@ -16,7 +16,8 @@
 
 <h1>Request removal</h1>
 <p class="lede">If you own the rights to an image on this map and want it credited differently or taken down, I'll take care of it.</p>
-<p>The map does not copy or host anyone's photos. Each image loads from its original site and links back there. Even so, if you would rather your work not appear, that's your call and I'll respect it.</p>
+<p>Archive photos on the map aren't copied or hosted here. Each one loads from its original site and links back there. Photos shared by PastPost users are hosted here. Either way, if you would rather your work not appear, that's your call and I'll respect it.</p>
+<p class="small">This form counts as a formal notice under the Digital Millennium Copyright Act when you check the two statements at the end. You can also email a notice to <a href="mailto:support@pastpostapp.com">support@pastpostapp.com</a>. See the <a href="../terms/">terms</a> for details and how counter-notices work.</p>
 <form data-table="takedown_requests" data-subject="Removal request" data-btn="Send request" data-thanks="Thanks, your request is in. I'll reply by email as soon as I can.">
 <label data-k="Name">Your name<input name="name" required autocomplete="name"></label>
 <label data-k="Email">Your email<input name="email" type="email" required autocomplete="email"></label>
@@ -25,7 +26,11 @@
 <select name="ask" required><option value="">Choose one</option><option>Remove these images</option><option>Remove everything from my site or collection</option><option>Change how my work is credited</option></select></label>
 <label data-k="Images">Which images? <span class="opt">Paste links to the photos or pins, or name the whole site</span><textarea name="images" required></textarea></label>
 <label data-k="Notes">Anything else <span class="opt">(optional, e.g. the exact credit line you want)</span><textarea name="notes" style="min-height:90px"></textarea></label>
+<label data-k="Address and phone">Mailing address and phone <span class="opt">(needed for a formal DMCA notice)</span><textarea name="contact" style="min-height:70px"></textarea></label>
 <label class="check" data-k="Confirmed"><input type="checkbox" name="confirmed" required>I own the rights to these images or I'm authorized to act for the owner.</label>
+<label class="check" data-k="Good faith"><input type="checkbox" name="goodfaith">I believe in good faith that this use of the material isn't authorized by the copyright owner, its agent or the law.</label>
+<label class="check" data-k="Under penalty of perjury"><input type="checkbox" name="perjury">The information in this request is accurate, and under penalty of perjury, I am the owner or authorized to act for the owner.</label>
+<label data-k="Signature">Signature <span class="opt">Type your full name</span><input name="signature" autocomplete="name"></label>
 <button type="submit">Send request</button>
 <p class="small">Your request goes to a private inbox only I can read. I'll reply as soon as I can, usually within a few days.</p>
 </form>
