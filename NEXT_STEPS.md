@@ -64,3 +64,10 @@
 - Pete is registering the DMCA designated agent (dmca.copyright.gov, $6, renew every 3 years) with his personal mailing address for now.
 - Later: get a virtual mailbox or business street address, then (1) amend the designation at dmca.copyright.gov ($6) and (2) update DMCA_ADDRESS in pages/build_pages.py and redeploy.
 - Waiting on Pete to send the agent mailing address so it can go into DMCA_ADDRESS on the Terms page (required on the site).
+
+## Later: copyright review practice and lawyer check
+- Before launch: one-time call with a media lawyer. Ask about (1) DMCA safe harbor when every upload is pre-approved (Mavrix v. LiveJournal, 2017), and (2) showing archive images hosted elsewhere, given New York courts' stricter view.
+- Moderation rule for Pete: approve or reject on the rules only (NYC location, appropriate content, nothing obviously copied). Don't pick photos for taste or fit, and don't edit photos or captions beyond fixing the pin.
+- Reject anything with a watermark, Getty/agency/newspaper credit, or a famous recognizable image, using the reason "Copyright: not theirs to share" (counts as a strike).
+- Act fast on removal requests; formal DMCA notices are flagged in the admin inbox.
+- Optional: add a short "How to review" note inside the admin panel so the rule is right where approvals happen.
