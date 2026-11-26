@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>PastPost admin</title>
+<link rel="icon" href="../icons/favicon-32.png">
+<style>
+@font-face{font-family:Figtree;font-weight:400;font-display:swap;src:url(../vendor/fonts/figtree-latin-400-normal.woff2) format("woff2")}
+@font-face{font-family:Figtree;font-weight:600;font-display:swap;src:url(../vendor/fonts/figtree-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:Figtree;font-weight:700;font-display:swap;src:url(../vendor/fonts/figtree-latin-700-normal.woff2) format("woff2")}
+:root{--ink:#1d1c1a;--paper:#fff;--accent:#f2b705;--muted:#6f6b64;--line:#e7e4df;--soft:#f5f4f1;--good:#2f7d4f;--bad:#b3261e;--warn:#9a6700}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--soft);color:var(--ink);font:400 15px/1.45 Figtree,system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:inherit}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+header.bar{position:sticky;top:0;z-index:20;background:var(--ink);color:#fff;display:flex;align-items:center;gap:14px;padding:10px 18px}
+header.bar b{font-size:17px}
+header.bar .sp{flex:1}
+header.bar a,header.bar button{color:#fff;background:none;border:0;cursor:pointer;font-size:14px;text-decoration:none;padding:6px 10px;border-radius:999px}
+header.bar a:hover,header.bar button:hover{background:rgba(255,255,255,.12)}
+header.bar .who{font-size:13px;opacity:.75}
+.wrap{max-width:1280px;margin:0 auto;padding:18px}
+.gate{max-width:420px;margin:12vh auto;background:#fff;border-radius:16px;padding:28px;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.gate h1{font-size:24px;margin:0 0 8px}
+.gate p{color:var(--muted);margin:0 0 18px}
+.gbtn{display:inline-flex;align-items:center;gap:10px;background:#fff;border:1px solid #dadce0;border-radius:999px;padding:10px 18px;font-weight:600;cursor:pointer}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.kpi{background:#fff;border-radius:12px;padding:12px 14px}
+.kpi .n{font-size:26px;font-weight:700;line-height:1.1}
+.kpi .l{font-size:13px;color:var(--muted)}
+.kpi .s{font-size:12px;color:var(--good)}
+.needs{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:14px}
+.need{background:#fff;border-radius:12px;padding:14px;border-left:5px solid var(--accent);cursor:pointer;text-align:left;border-top:0;border-right:0;border-bottom:0;width:100%}
+.need.zero{border-left-color:var(--line);opacity:.7}
+.need b{display:block;font-size:22px}
+.need span{color:var(--muted);font-size:13px}
+.need em{display:block;font-style:normal;font-size:12px;color:var(--bad);font-weight:600;margin-top:2px}
+.card{background:#fff;border-radius:12px;padding:14px;margin-bottom:14px}
+.card h2{font-size:16px;margin:0 0 10px;display:flex;align-items:center;gap:10px}
+.card h2 .sp{flex:1}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);font-weight:400}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.chart svg{width:100%;height:170px;display:block}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+.tabs button{border:0;background:#fff;border-radius:999px;padding:8px 14px;cursor:pointer;font-weight:600;color:var(--muted)}
+.tabs button[aria-selected=true]{background:var(--ink);color:#fff}
+.tabs button .c{margin-left:6px;font-size:12px;background:var(--accent);color:var(--ink);border-radius:999px;padding:1px 7px}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.tools input,.tools select{border:1px solid var(--line);border-radius:999px;padding:8px 12px;background:#fff}
+.tools input{flex:1;min-width:180px}
+table{width:100%;border-collapse:collapse;background:#fff}
+.tbl{background:#fff;border-radius:12px;overflow:clip}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:600;background:#fbfaf8;position:sticky;top:52px;cursor:pointer;user-select:none;white-space:nowrap}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:#fbfaf6}
+td small{display:block;color:var(--muted);font-size:12px}
+.th{width:56px;height:56px;border-radius:8px;object-fit:cover;background:var(--soft);display:block}
+.pill{display:inline-block;font-size:12px;font-weight:600;border-radius:999px;padding:2px 8px;background:var(--soft);white-space:nowrap}
+.pill.pending,.pill.new,.pill.open,.pill.in_progress{background:#fff4cc;color:var(--warn)}
+.pill.approved,.pill.done,.pill.resolved,.pill.visible{background:#e3f3e8;color:var(--good)}
+.pill.rejected,.pill.removed,.pill.banned,.pill.declined,.pill.hidden{background:#fbe4e2;color:var(--bad)}
+.pill.dmca{background:var(--bad);color:#fff}
+.empty{color:var(--muted);padding:24px;text-align:center;background:#fff;border-radius:12px}
+.more{display:block;margin:10px auto;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 16px;cursor:pointer}
+.panel{position:fixed;top:0;right:0;bottom:0;width:min(520px,100vw);background:#fff;z-index:40;box-shadow:-8px 0 30px rgba(0,0,0,.15);display:flex;flex-direction:column;transform:translateX(105%);transition:transform .2s}
+.panel.open{transform:none}
+.panel header{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.panel header b{flex:1;font-size:16px}
+.panel header button{border:0;background:var(--soft);border-radius:999px;width:34px;height:34px;cursor:pointer;font-size:18px}
+.panel .bd{overflow:auto;padding:16px;flex:1}
+.panel .big{width:100%;max-height:340px;object-fit:contain;background:var(--soft);border-radius:10px;margin-bottom:12px}
+.panel dl{display:grid;grid-template-columns:120px 1fr;gap:6px 10px;margin:0 0 14px;font-size:14px}
+.panel dt{color:var(--muted)}
+.panel dd{margin:0;word-break:break-word}
+.panel h3{font-size:14px;margin:18px 0 8px}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;cursor:pointer;font-weight:600}
+.btn.pri{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn.ok{background:var(--good);color:#fff;border-color:var(--good)}
+.btn.no{color:var(--bad);border-color:#f0c4c0}
+.note{background:var(--soft);border-radius:10px;padding:8px 10px;margin-bottom:6px;font-size:14px}
+.note small{display:block;color:var(--muted);font-size:12px}
+.panel textarea{width:100%;min-height:70px;border:1px solid var(--line);border-radius:10px;padding:8px}
+.shade{position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:35;display:none}
+.shade.on{display:block}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:999px;z-index:60;font-weight:600;display:none}
+.reasons{display:none;flex-direction:column;gap:6px;margin:8px 0}
+.reasons.on{display:flex}
+.reasons button{text-align:left}
+.srcbar{height:8px;background:var(--accent);border-radius:4px}
+.cols2{display:grid;grid-template-columns:2fr 1fr;gap:14px}
+@media (max-width:860px){.cols2{grid-template-columns:1fr}.hide-sm{display:none}th{top:48px}}
+@media (max-width:600px){header.bar .who{display:none}.wrap{padding:12px}.kpis,.needs{grid-template-columns:1fr 1fr;gap:8px}.kpi .n{font-size:22px}.need{padding:10px 12px}.need b{font-size:20px}th,td{padding:8px 6px;font-size:14px}.th{width:44px;height:44px}.tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.tabs button{flex:none}}
+</style>
+</head>
+<body>
+<header class="bar"><b>PastPost admin</b><span class="sp"></span><span class="who" id="who"></span><a href="../">Map</a><button id="out" hidden>Log out</button></header>
+<div class="wrap" id="app"><div class="gate"><h1>Loading…</h1></div></div>
+<div class="shade" id="shade"></div>
+<aside class="panel" id="panel" role="dialog" aria-modal="true" aria-label="Details"><header><b id="ptitle"></b><button id="pclose" aria-label="Close">×</button></header><div class="bd" id="pbody"></div></aside>
+<div class="toast" id="toast" role="status"></div>
+<script src="../vendor/supabase.js"></script>
+<script>
+(function () {
+const SB = 'https://iurancbmhdizoafdhctq.supabase.co', KEY = 'sb_publishable_bdXBpE0UULjIjYDNrHg83g_DsW0WUsb';
+const PUB = SB + '/storage/v1/object/public/uploads/';
+const KIND = { p: 'Photo', c: 'Postcard', i: 'Illustration', m: 'Map', b: 'Blueprint', d: 'Document' };
+const RIGHTS = { own_photo: 'Took it themselves', family_photo: 'Family collection', permission: 'Has permission', public_domain: 'Public domain' };
+const REJECT = ['Not in New York City', 'Wrong or unclear location', 'Copyright: not theirs to share', 'Low quality or duplicate', 'Breaks the rules'];
+const REMOVE = ['Copyright: removed after a rights complaint', 'Breaks the rules', 'Removed by moderator'];
+const $ = s => document.querySelector(s), app = $('#app');
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = n => (n || 0).toLocaleString('en-US');
+const when = d => { if (!d) return '—'; const t = new Date(d), s = (Date.now() - t) / 1000; if (s < 3600) return Math.max(1, Math.round(s / 60)) + ' min ago'; if (s < 86400) return Math.round(s / 3600) + ' h ago'; if (s < 86400 * 7) return Math.round(s / 86400) + ' d ago'; return t.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: t.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' }); };
+const toast = m => { const t = $('#toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => t.style.display = 'none', 2200); };
+const sb = window.SB_CLIENT = supabase.createClient(SB, KEY, { auth: { persistSession: true, detectSessionInUrl: true, flowType: 'implicit' } });
+const S = { tab: new URLSearchParams(location.search).get('tab') || 'review', data: {}, users: [], q: '', f: '', sort: null, shown: 100 };
+
+// ---------- sign in ----------
+async function start() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return gate('Sign in with your admin Google account to continue.', true);
+  const { data: prof } = await sb.from('profiles').select('role,banned,username').eq('id', session.user.id).maybeSingle();
+  $('#who').textContent = session.user.email; $('#out').hidden = false;
+  if (!prof || prof.role !== 'admin' || prof.banned) return gate('This account doesn’t have admin access.', false);
+  await load(); render();
+}
+function gate(msg, showBtn) {
+  app.innerHTML = `<div class="gate"><h1>PastPost admin</h1><p>${esc(msg)}</p>${showBtn ? `<button class="gbtn" id="g"><svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.6 13.2l7.9 6.2C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.6c0-1.6-.1-3.1-.4-4.6H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17z"/><path fill="#FBBC05" d="M10.5 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.2C.9 16.6 0 20.2 0 24s.9 7.4 2.6 10.8l7.9-6.2z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.5 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.2C6.6 42.6 14.6 48 24 48z"/></svg>Sign in with Google</button>` : `<p><a href="../">Back to the map</a></p>`}</div>`;
+  const g = $('#g'); if (g) g.onclick = () => sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
+}
+$('#out').onclick = async () => { await sb.auth.signOut(); location.reload(); };
+
+// ---------- data ----------
+async function load() {
+  const q = (t, f) => f(sb.from(t)).then(r => r.data || []);
+  const [stats, act, users, posts, reports, takedowns, feedback, comments, notes, archive] = await Promise.all([
+    sb.rpc('admin_stats').then(r => r.data || {}),
+    sb.rpc('admin_activity', { days: 30 }).then(r => r.data || []),
+    sb.rpc('admin_users').then(r => r.data || []),
+    q('posts', t => t.select('id,user_id,title,description,year_taken,year_approx,lat,lon,place_label,image_key,thumb_key,rights,status,mod_note,kind,created_at,approved_at').order('created_at', { ascending: false }).limit(2000)),
+    q('reports', t => t.select('*').order('created_at', { ascending: false }).limit(1000)),
+    q('takedown_requests', t => t.select('*').order('created_at', { ascending: false }).limit(1000)),
+    q('feedback', t => t.select('*').order('created_at', { ascending: false }).limit(1000)),
+    q('comments', t => t.select('*').order('created_at', { ascending: false }).limit(1000)),
+    q('admin_notes', t => t.select('*').order('created_at', { ascending: true }).limit(5000)),
+    fetch('../d/stats.json').then(r => r.ok ? r.json() : null).catch(() => null)
+  ]);
+  const byId = {}; users.forEach(u => byId[u.id] = u);
+  Object.assign(S, { stats, act, users, byId, archive, data: { posts, reports, takedowns, feedback, comments }, notes });
+}
+const uname = id => { const u = S.byId[id]; return u ? (u.display_name || '@' + u.username) : 'Deleted user'; };
+const notesFor = (t, id) => S.notes.filter(n => n.target_type === t && n.target_id === String(id));
+const isDmca = t => t.goodfaith && t.perjury && t.signature;
+
+// ---------- page ----------
+const TABS = [
+  ['review', 'Review photos', () => S.data.posts.filter(p => p.status === 'pending').length],
+  ['reports', 'Reports', () => S.data.reports.filter(r => r.status === 'open').length],
+  ['takedowns', 'Removal requests', () => S.data.takedowns.filter(r => r.status === 'new' || r.status === 'in_progress').length],
+  ['feedback', 'Feedback', () => S.data.feedback.filter(r => r.status === 'new').length],
+  ['photos', 'All photos', () => 0], ['people', 'People', () => 0], ['comments', 'Comments', () => 0], ['archive', 'Archive', () => 0]];
+function render() {
+  const st = S.stats, a = S.archive, d = S.data;
+  const dm = d.takedowns.filter(t => (t.status === 'new' || t.status === 'in_progress') && isDmca(t)).length;
+  const need = [['review', 'photos waiting for review'], ['reports', 'open reports'], ['takedowns', 'removal requests'], ['feedback', 'new feedback']];
+  app.innerHTML = `
+  <div class="kpis">
+    ${kpi(st.users, 'People signed up', st.users_7d ? '+' + st.users_7d + ' this week' : '')}
+    ${kpi(st.posts_live, 'Community photos live')}
+    ${kpi(st.comments, 'Comments', st.comments_7d ? '+' + st.comments_7d + ' this week' : '')}
+    ${kpi(st.likes, 'Likes')}${kpi(st.saves, 'Saves')}
+    ${a ? kpi(a.images, 'Archive images on the map') + kpi(a.pins, 'Places') + kpi(a.films, 'Films') : ''}
+  </div>
+  <div class="needs">${need.map(([t, l]) => { const n = TABS.find(x => x[0] === t)[2](); return `<button class="need${n ? '' : ' zero'}" data-go="${t}"><b>${n}</b><span>${l}</span>${t === 'takedowns' && dm ? `<em>${dm} formal DMCA notice${dm > 1 ? 's' : ''}: act quickly</em>` : ''}</button>`; }).join('')}</div>
+  <div class="card chart"><h2>Last 30 days<span class="sp"></span><span class="legend"><span><i style="background:var(--ink)"></i>Sign ups</span><span><i style="background:var(--accent)"></i>Photos</span><span><i style="background:#8fb3a0"></i>Comments</span></span></h2>${chart(S.act)}</div>
+  <div class="tabs" role="tablist">${TABS.map(([k, l, c]) => { const n = c(); return `<button role="tab" aria-selected="${S.tab === k}" data-tab="${k}">${l}${n ? `<span class="c">${n}</span>` : ''}</button>`; }).join('')}</div>
+  <div id="list"></div>`;
+  app.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => setTab(b.dataset.tab));
+  app.querySelectorAll('[data-go]').forEach(b => b.onclick = () => { setTab(b.dataset.go); $('#list').scrollIntoView({ behavior: 'smooth' }); });
+  list();
+}
+const kpi = (n, l, s) => `<div class="kpi"><div class="n">${fmt(n)}</div><div class="l">${l}</div>${s ? `<div class="s">${s}</div>` : ''}</div>`;
+function setTab(t) { S.tab = t; S.q = ''; S.f = ''; S.sort = null; S.shown = 100; history.replaceState(null, '', '?tab=' + t); render(); }
+function chart(rows) {
+  if (!rows.length) return '<p class="empty">No data yet.</p>';
+  const W = 900, H = 170, pad = 22, max = Math.max(3, ...rows.map(r => Math.max(r.signups, r.posts, r.comments)));
+  const bw = (W - pad) / rows.length, y = v => H - 18 - (v / max) * (H - 30);
+  let s = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Daily sign ups, photos and comments">`;
+  for (let g = 0; g <= 2; g++) { const v = Math.round(max * g / 2); s += `<line x1="${pad}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="#eee"/><text x="0" y="${y(v) + 4}" font-size="10" fill="#999">${v}</text>`; }
+  rows.forEach((r, i) => { const x = pad + i * bw, w = Math.max(2, bw / 3 - 1);
+    [[r.signups, 'var(--ink)'], [r.posts, 'var(--accent)'], [r.comments, '#8fb3a0']].forEach(([v, c], k) => { if (v) s += `<rect x="${x + k * (w + 1)}" y="${y(v)}" width="${w}" height="${H - 18 - y(v)}" fill="${c}" rx="1"><title>${r.day}: ${v}</title></rect>`; });
+    if (i % 5 === 0 || i === rows.length - 1) s += `<text x="${x}" y="${H - 4}" font-size="10" fill="#999">${new Date(r.day + 'T12:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</text>`; });
+  return s + '</svg>';
+}
+
+// ---------- lists ----------
+const VIEWS = {
+  review: { rows: () => S.data.posts.filter(p => p.status === 'pending').reverse(), empty: 'Nothing waiting. Every photo has been reviewed.', type: 'post',
+    head: ['', 'Photo', 'From', 'Where', 'Sent'], row: p => [thumb(p), `<b>${esc(p.title)}</b><small>${KIND[p.kind] || 'Photo'}${p.year_taken ? ' · ' + (p.year_approx ? 'about ' : '') + p.year_taken : ''} · ${esc(RIGHTS[p.rights] || p.rights)}</small>`, esc(uname(p.user_id)), esc(p.place_label || ''), when(p.created_at)] },
+  photos: { rows: () => S.data.posts, type: 'post', filters: [['', 'Any status'], ['approved', 'Live'], ['pending', 'Waiting'], ['rejected', 'Rejected'], ['removed', 'Removed']], filter: (p, f) => p.status === f,
+    search: p => p.title + ' ' + (p.place_label || '') + ' ' + uname(p.user_id),
+    head: ['', 'Photo', 'From', 'Status', 'Added'], row: p => [thumb(p), `<b>${esc(p.title)}</b><small>${esc(p.place_label || '')}</small>`, esc(uname(p.user_id)), pill(p.status), when(p.created_at)] },
+  people: { rows: () => S.users, type: 'user', filters: [['', 'Everyone'], ['posted', 'Shared photos'], ['waiting', 'Has photos waiting'], ['strikes', 'Has copyright strikes'], ['banned', 'Banned'], ['week', 'Joined this week']],
+    filter: (u, f) => f === 'posted' ? u.posts_live > 0 : f === 'waiting' ? u.posts_pending > 0 : f === 'strikes' ? u.copyright_strikes > 0 : f === 'banned' ? u.banned : f === 'week' ? Date.now() - new Date(u.created_at) < 7 * 864e5 : true,
+    search: u => [u.email, u.username, u.display_name, u.neighborhood].join(' '),
+    head: ['Person', 'Joined', 'Last seen', 'Photos', 'Comments', 'Likes', 'Strikes'], sortable: [null, 'created_at', 'last_sign_in_at', 'posts_live', 'comments', 'likes', 'copyright_strikes'],
+    row: u => [`<b>${esc(u.display_name || '@' + u.username)}</b>${u.role === 'admin' ? ' <span class="pill">admin</span>' : ''}${u.banned ? ' <span class="pill banned">banned</span>' : ''}<small>${esc(u.email)} · @${esc(u.username)}</small>`, when(u.created_at), when(u.last_sign_in_at), u.posts_live + (u.posts_pending ? ` <small>${u.posts_pending} waiting</small>` : ''), u.comments, u.likes, u.copyright_strikes ? `<span class="pill rejected">${u.copyright_strikes} of 3</span>` : ''] },
+  reports: { rows: () => S.data.reports, type: 'report', filters: [['open', 'Open'], ['', 'All'], ['resolved', 'Resolved'], ['dismissed', 'Dismissed']], filter: (r, f) => r.status === f, deff: 'open',
+    head: ['Reason', 'About', 'From', 'Status', 'When'], row: r => [`<b>${esc(r.reason.replace('_', ' '))}</b>${r.details ? `<small>${esc(r.details.slice(0, 90))}</small>` : ''}`, esc(targetLabel(r.target_type, r.target_id)), r.reporter_id ? esc(uname(r.reporter_id)) : 'Visitor', pill(r.status), when(r.created_at)] },
+  takedowns: { rows: () => S.data.takedowns, type: 'takedown', filters: [['open', 'New and in progress'], ['', 'All'], ['done', 'Done'], ['declined', 'Declined']], filter: (r, f) => f === 'open' ? (r.status === 'new' || r.status === 'in_progress') : r.status === f, deff: 'open',
+    search: r => [r.name, r.email, r.org, r.images].join(' '),
+    head: ['From', 'Asking', 'Status', 'When'], row: r => [`<b>${esc(r.name)}</b>${isDmca(r) ? ' <span class="pill dmca">DMCA</span>' : ''}<small>${esc(r.org || r.email)}</small>`, esc(r.ask) + `<small>${esc(r.images.slice(0, 80))}</small>`, pill(r.status), when(r.created_at)] },
+  feedback: { rows: () => S.data.feedback, type: 'feedback', filters: [['new', 'New'], ['', 'All'], ['done', 'Done'], ['ignored', 'Ignored']], filter: (r, f) => r.status === f, deff: 'new',
+    search: r => [r.type, r.message, r.email].join(' '),
+    head: ['Type', 'Message', 'From', 'Status', 'When'], row: r => [esc(r.type), esc(r.message.slice(0, 120)), esc(r.email || (r.user_id ? uname(r.user_id) : 'Visitor')), pill(r.status), when(r.created_at)] },
+  comments: { rows: () => S.data.comments, type: 'comment', filters: [['', 'All'], ['visible', 'Visible'], ['hidden', 'Hidden']], filter: (r, f) => r.status === f,
+    search: r => r.body + ' ' + uname(r.user_id),
+    head: ['Comment', 'By', 'On', 'Status', 'When'], row: r => [esc(r.body.slice(0, 140)), esc(uname(r.user_id)), esc(targetLabel(r.target_type, r.target_id)), pill(r.status), when(r.created_at)] }
+};
+const thumb = p => `<img class="th" loading="lazy" alt="" src="${PUB + esc(p.thumb_key || p.image_key)}">`;
+const pill = s => `<span class="pill ${esc(s)}">${esc({ approved: 'live', pending: 'waiting', in_progress: 'in progress' }[s] || s)}</span>`;
+function targetLabel(t, id) { if (t === 'post') { const p = S.data.posts.find(x => x.id === id); return p ? 'Photo: ' + p.title : 'Photo (deleted)'; } if (t === 'profile') return 'Person: ' + uname(id); if (t === 'comment') { const c = S.data.comments.find(x => x.id === id); return c ? 'Comment: ' + c.body.slice(0, 40) : 'Comment'; } return 'Archive photo'; }
+
+function list() {
+  const box = $('#list');
+  if (S.tab === 'archive') return archiveView(box);
+  const v = VIEWS[S.tab]; if (S.f === '' && v.deff && !S.touched) S.f = v.deff;
+  let rows = v.rows();
+  if (S.f && v.filter) rows = rows.filter(r => v.filter(r, S.f));
+  if (S.q && v.search) { const q = S.q.toLowerCase(); rows = rows.filter(r => v.search(r).toLowerCase().includes(q)); }
+  if (S.sort) { const [k, dir] = S.sort; rows = rows.slice().sort((a, b) => ((a[k] || 0) > (b[k] || 0) ? 1 : (a[k] || 0) < (b[k] || 0) ? -1 : 0) * dir); }
+  const tools = (v.search || v.filters) ? `<div class="tools">${v.search ? `<input type="search" id="q" placeholder="Search" value="${esc(S.q)}">` : ''}${v.filters ? `<select id="f">${v.filters.map(([k, l]) => `<option value="${k}"${S.f === k ? ' selected' : ''}>${l}</option>`).join('')}</select>` : ''}<span class="pill" style="align-self:center">${fmt(rows.length)}</span></div>` : '';
+  box.innerHTML = tools + (rows.length ? `<div class="tbl"><table><thead><tr>${v.head.map((h, i) => `<th${v.sortable && v.sortable[i] ? ` data-sort="${v.sortable[i]}"` : ''}>${h}${S.sort && v.sortable && S.sort[0] === v.sortable[i] ? (S.sort[1] > 0 ? ' ▲' : ' ▼') : ''}</th>`).join('')}</tr></thead><tbody>${rows.slice(0, S.shown).map((r, i) => `<tr data-i="${i}">${v.row(r).map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${rows.length > S.shown ? '<button class="more" id="more">Show more</button>' : ''}` : `<p class="empty">${v.empty || 'Nothing here.'}</p>`);
+  const q = $('#q'); if (q) q.oninput = () => { S.q = q.value; S.shown = 100; const pos = q.selectionStart; list(); const n = $('#q'); n.focus(); n.setSelectionRange(pos, pos); };
+  const f = $('#f'); if (f) f.onchange = () => { S.f = f.value; S.touched = true; S.shown = 100; list(); };
+  const m = $('#more'); if (m) m.onclick = () => { S.shown += 200; list(); };
+  box.querySelectorAll('th[data-sort]').forEach(th => th.onclick = () => { const k = th.dataset.sort; S.sort = S.sort && S.sort[0] === k ? [k, -S.sort[1]] : [k, -1]; list(); });
+  box.querySelectorAll('tbody tr').forEach(tr => tr.onclick = () => open(v.type, rows[+tr.dataset.i]));
+}
+function archiveView(box) {
+  const a = S.archive; if (!a) { box.innerHTML = '<p class="empty">Archive totals aren’t available yet.</p>'; return; }
+  const top = Object.entries(a.sources), mx = top[0][1];
+  box.innerHTML = `<div class="card"><h2>${fmt(a.images)} images on ${fmt(a.pins)} places, ${fmt(a.films)} films<span class="sp"></span><small style="font-weight:400;color:var(--muted)">${fmt(a.documents)} documents and prints · updated ${esc(a.built.replace('T', ' '))}</small></h2>
+  <div class="tbl"><table><thead><tr><th>Source</th><th>Images</th><th class="hide-sm" style="width:40%"></th></tr></thead><tbody>${top.map(([k, n]) => `<tr style="cursor:default"><td>${esc(k)}</td><td>${fmt(n)}</td><td class="hide-sm"><div class="srcbar" style="width:${Math.max(1, n / mx * 100)}%"></div></td></tr>`).join('')}</tbody></table></div></div>`;
+}
+
+// ---------- detail panel ----------
+const panel = $('#panel'), shade = $('#shade');
+function close() { panel.classList.remove('open'); shade.classList.remove('on'); }
+$('#pclose').onclick = close; shade.onclick = close; document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+function open(type, r) {
+  S.cur = { type, r };
+  const b = $('#pbody'), dl = rows => `<dl>${rows.filter(x => x[1] !== '' && x[1] != null).map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
+  let html = '', title = '';
+  if (type === 'post') {
+    title = r.title;
+    html = `<img class="big" alt="" src="${PUB + esc(r.image_key)}">` + dl([['Status', pill(r.status) + (r.mod_note ? ` <small>${esc(r.mod_note)}</small>` : '')], ['Shared by', `<a href="#" data-user="${r.user_id}">${esc(uname(r.user_id))}</a>`], ['Type', KIND[r.kind] || 'Photo'], ['Year', r.year_taken ? (r.year_approx ? 'About ' : '') + r.year_taken : ''], ['Place', esc(r.place_label || '') + ` <small><a href="../#at=${r.lat},${r.lon},18" target="_blank" rel="noopener">Open on the map</a></small>`], ['Rights', esc(RIGHTS[r.rights] || r.rights)], ['Story', esc(r.description || '')], ['Added', new Date(r.created_at).toLocaleString()]]);
+    const acts = r.status === 'pending' ? `<button class="btn ok" data-a="approve">Approve</button><button class="btn no" data-a="rejectmenu">Reject</button>`
+      : r.status === 'approved' ? `<button class="btn no" data-a="removemenu">Remove from the map</button>` : `<button class="btn" data-a="restore">Put back live</button>`;
+    html += `<div class="acts">${acts}<a class="btn" href="${PUB + esc(r.image_key)}" target="_blank" rel="noopener">Full size</a></div>
+      <div class="reasons" id="rs">${(r.status === 'pending' ? REJECT : REMOVE).map(x => `<button class="btn" data-reason="${esc(x)}">${esc(x)}</button>`).join('')}<small style="color:var(--muted)">Reasons starting with Copyright give the uploader a strike. 3 strikes closes their account.</small></div>`;
+  } else if (type === 'user') {
+    title = r.display_name || '@' + r.username;
+    const mine = S.data.posts.filter(p => p.user_id === r.id);
+    html = dl([['Email', `<a href="mailto:${esc(r.email)}">${esc(r.email)}</a>`], ['Username', '@' + esc(r.username)], ['Signs in with', esc(r.provider)], ['Neighborhood', esc(r.neighborhood || '')], ['Joined', new Date(r.created_at).toLocaleString()], ['Last seen', when(r.last_sign_in_at)], ['Photos', `${r.posts_live} live, ${r.posts_pending} waiting, ${r.posts_rejected} rejected or removed`], ['Comments', r.comments], ['Likes and saves', `${r.likes} likes, ${r.saves} saves`], ['Copyright strikes', r.copyright_strikes + ' of 3'], ['Reports about them', r.reports_against], ['Status', r.banned ? pill('banned') : 'Active']]);
+    if (r.role !== 'admin') html += `<div class="acts">${r.banned ? '<button class="btn" data-a="unban">Unban</button>' : '<button class="btn no" data-a="ban">Ban</button>'}${r.copyright_strikes ? '<button class="btn" data-a="clearstrikes">Clear strikes</button>' : ''}</div>`;
+    if (mine.length) html += `<h3>Their photos</h3><div style="display:flex;gap:6px;flex-wrap:wrap">${mine.slice(0, 30).map(p => `<img class="th" style="cursor:pointer" data-post="${p.id}" alt="${esc(p.title)}" title="${esc(p.title)} (${esc(p.status)})" src="${PUB + esc(p.thumb_key || p.image_key)}">`).join('')}</div>`;
+  } else if (type === 'report') {
+    title = 'Report: ' + r.reason.replace('_', ' ');
+    html = dl([['About', esc(targetLabel(r.target_type, r.target_id))], ['Reason', esc(r.reason.replace('_', ' '))], ['Details', esc(r.details || '')], ['From', r.reporter_id ? `<a href="#" data-user="${r.reporter_id}">${esc(uname(r.reporter_id))}</a>` : 'Visitor'], ['Status', pill(r.status)], ['When', new Date(r.created_at).toLocaleString()]]);
+    html += `<div class="acts">${r.target_type === 'post' ? '<button class="btn" data-a="openpost">See the photo</button>' : ''}${r.target_type === 'profile' ? `<button class="btn" data-user="${r.target_id}">See the person</button>` : ''}${r.target_type === 'comment' ? '<button class="btn no" data-a="hidecomment">Hide the comment</button>' : ''}${r.status === 'open' ? '<button class="btn ok" data-a="resolve">Resolved</button><button class="btn" data-a="dismiss">Dismiss</button>' : '<button class="btn" data-a="reopen">Reopen</button>'}</div>`;
+  } else if (type === 'takedown') {
+    title = 'Removal request: ' + r.name;
+    html = (isDmca(r) ? '<p class="note" style="background:#fbe4e2"><b>Formal DMCA notice.</b> Remove the material quickly, then let the uploader know. Keep this record.</p>' : '') +
+      dl([['From', esc(r.name)], ['Email', `<a href="mailto:${esc(r.email)}?subject=${encodeURIComponent('Your PastPost removal request')}">${esc(r.email)}</a>`], ['Organization', esc(r.org || '')], ['Asking', esc(r.ask)], ['Images', esc(r.images).replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>')], ['Notes', esc(r.notes || '')], ['Address and phone', esc(r.contact || '')], ['Statements', isDmca(r) ? 'Good faith and penalty of perjury, both checked' : (r.goodfaith || r.perjury ? 'Only one checked' : 'Not checked')], ['Signature', esc(r.signature || '')], ['Status', pill(r.status)], ['When', new Date(r.created_at).toLocaleString()]]);
+    html += `<div class="acts">${r.status === 'new' ? '<button class="btn" data-a="t_in_progress">Working on it</button>' : ''}${r.status !== 'done' ? '<button class="btn ok" data-a="t_done">Done</button>' : ''}${r.status !== 'declined' ? '<button class="btn" data-a="t_declined">Decline</button>' : ''}</div>`;
+  } else if (type === 'feedback') {
+    title = 'Feedback: ' + r.type;
+    html = dl([['Message', esc(r.message)], ['Link', r.link ? `<a href="${esc(r.link)}" target="_blank" rel="noopener">${esc(r.link)}</a>` : ''], ['From', r.email ? `<a href="mailto:${esc(r.email)}">${esc(r.email)}</a>` : r.user_id ? `<a href="#" data-user="${r.user_id}">${esc(uname(r.user_id))}</a>` : 'Visitor'], ['Status', pill(r.status)], ['When', new Date(r.created_at).toLocaleString()]]);
+    html += `<div class="acts">${r.status !== 'done' ? '<button class="btn ok" data-a="f_done">Done</button>' : ''}${r.status !== 'ignored' ? '<button class="btn" data-a="f_ignored">Ignore</button>' : ''}${r.status !== 'new' ? '<button class="btn" data-a="f_new">Mark new</button>' : ''}</div>`;
+  } else if (type === 'comment') {
+    title = 'Comment';
+    html = dl([['Comment', esc(r.body)], ['By', `<a href="#" data-user="${r.user_id}">${esc(uname(r.user_id))}</a>`], ['On', esc(targetLabel(r.target_type, r.target_id))], ['Status', pill(r.status)], ['When', new Date(r.created_at).toLocaleString()]]);
+    html += `<div class="acts">${r.status === 'visible' ? '<button class="btn no" data-a="c_hidden">Hide</button>' : '<button class="btn" data-a="c_visible">Show again</button>'}</div>`;
+  }
+  const nid = type === 'user' ? r.id : r.id;
+  html += `<h3>Private notes</h3>${notesFor(type, nid).map(n => `<div class="note">${esc(n.body)}<small>${new Date(n.created_at).toLocaleString()}</small></div>`).join('') || '<p style="color:var(--muted);font-size:14px;margin:0 0 6px">Only you can see these.</p>'}<textarea id="nt" placeholder="Add a note"></textarea><div class="acts" style="margin-top:6px"><button class="btn pri" data-a="note">Save note</button></div>`;
+  $('#ptitle').textContent = title; b.innerHTML = html; b.scrollTop = 0;
+  panel.classList.add('open'); shade.classList.add('on');
+}
+$('#pbody').addEventListener('click', async e => {
+  const u = e.target.closest('[data-user]'); if (u) { e.preventDefault(); const x = S.byId[u.dataset.user]; if (x) open('user', x); return; }
+  const pp = e.target.closest('[data-post]'); if (pp) { const x = S.data.posts.find(p => p.id === pp.dataset.post); if (x) open('post', x); return; }
+  const rs = e.target.closest('[data-reason]'); if (rs) return act(S.cur.r.status === 'pending' ? 'reject' : 'remove', rs.dataset.reason);
+  const a = e.target.closest('[data-a]'); if (a) act(a.dataset.a);
+});
+async function act(a, reason) {
+  const { type, r } = S.cur; let res, msg;
+  const upd = (t, patch) => sb.from(t).update(patch).eq('id', r.id);
+  if (a === 'rejectmenu' || a === 'removemenu') { $('#rs').classList.toggle('on'); return; }
+  if (a === 'approve') { res = await upd('posts', { status: 'approved', approved_at: new Date().toISOString(), mod_note: null }); msg = 'Approved'; }
+  else if (a === 'reject') { res = await upd('posts', { status: 'rejected', mod_note: reason }); msg = 'Rejected'; }
+  else if (a === 'remove') { res = await upd('posts', { status: 'removed', mod_note: reason }); msg = 'Removed from the map'; }
+  else if (a === 'restore') { res = await upd('posts', { status: 'approved', approved_at: r.approved_at || new Date().toISOString(), mod_note: null }); msg = 'Live again'; }
+  else if (a === 'ban' || a === 'unban') { if (a === 'ban' && !confirm('Ban ' + (r.display_name || r.username) + '? They won’t be able to post or comment.')) return; res = await sb.from('profiles').update({ banned: a === 'ban' }).eq('id', r.id); msg = a === 'ban' ? 'Banned' : 'Unbanned'; }
+  else if (a === 'clearstrikes') { res = await sb.from('profiles').update({ copyright_strikes: 0 }).eq('id', r.id); msg = 'Strikes cleared'; }
+  else if (a === 'resolve' || a === 'dismiss' || a === 'reopen') { res = await upd('reports', { status: a === 'resolve' ? 'resolved' : a === 'dismiss' ? 'dismissed' : 'open' }); msg = 'Saved'; }
+  else if (a === 'openpost') { const p = S.data.posts.find(x => x.id === r.target_id); if (p) open('post', p); else toast('That photo was deleted'); return; }
+  else if (a === 'hidecomment') { res = await sb.from('comments').update({ status: 'hidden' }).eq('id', r.target_id); msg = 'Comment hidden'; }
+  else if (a.startsWith('t_')) { res = await upd('takedown_requests', { status: a.slice(2) }); msg = 'Saved'; }
+  else if (a.startsWith('f_')) { res = await upd('feedback', { status: a.slice(2) }); msg = 'Saved'; }
+  else if (a.startsWith('c_')) { res = await upd('comments', { status: a.slice(2) }); msg = 'Saved'; }
+  else if (a === 'note') { const t = $('#nt').value.trim(); if (!t) return; res = await sb.from('admin_notes').insert({ target_type: type, target_id: String(r.id), body: t }); msg = 'Note saved'; }
+  if (res && res.error) return toast(res.error.message);
+  toast(msg); const keep = { type, id: r.id };
+  await load(); render();
+  const pool = { post: S.data.posts, user: S.users, report: S.data.reports, takedown: S.data.takedowns, feedback: S.data.feedback, comment: S.data.comments }[keep.type];
+  const fresh = pool && pool.find(x => x.id === keep.id);
+  if (fresh && !(a === 'approve' || a === 'reject')) open(keep.type, fresh);
+  else if (S.tab === 'review') { const nx = VIEWS.review.rows()[0]; if (nx) open('post', nx); else close(); } else close();
+}
+sb.auth.onAuthStateChange(ev => { if (ev === 'SIGNED_IN' && !S.started) { S.started = true; start(); } });
+start().then(() => S.started = true).catch(e => gate('Couldn’t load: ' + e.message, false));
+})();
+</script>
+</body></html>

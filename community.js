@@ -197,7 +197,7 @@
     _buildNav();
     const who = C.prof ? (C.prof.display_name || '@' + C.prof.username) : '';
     const top = `<button class="ditem" data-p="account">${ICU}${C.user ? esc(who) : 'Log in or sign up'}</button>
-      ${C.prof && C.prof.role === 'admin' ? `<button class="ditem" data-p="admin">${ICS}Review and inbox<span class="n">${C.pending || ''}</span></button>` : ''}
+      ${C.prof && C.prof.role === 'admin' ? `<button class="ditem" data-p="admin">${ICS}Review and inbox<span class="n">${C.pending || ''}</span></button><a class="ditem" href="admin/">${ICS}Admin dashboard</a>` : ''}
       <div class="dsep"></div>`;
     dnav.insertAdjacentHTML('afterbegin', top);
     const IOS = NATIVE && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === 'ios';
