@@ -186,7 +186,7 @@
   }
   function refreshNav() { if (!dpanel.hidden) return; buildNav(); }
   const BLK = { get() { try { return JSON.parse(localStorage.getItem('cblocked') || '[]'); } catch (e) { return []; } }, has(id) { return this.get().includes(id); },
-    add(id) { const a = this.get(); if (!a.includes(id)) a.push(id); try { localStorage.setItem('cblocked', JSON.stringify(a)); } catch (e) {} } };
+    add(id) { const a = this.get(); if (!a.includes(id)) a.push(id); try { localStorage.setItem('cblocked', JSON.stringify(a)); } catch (e) {} if (typeof touchPrefs === 'function') touchPrefs(); } };
   function hasSession() { try { return Object.keys(localStorage).some(k => k.startsWith('sb-') && k.endsWith('-auth-token')); } catch (e) { return false; } }
   // public reads without the SDK
   const rest = (path) => fetch(SB + '/rest/v1/' + path, { headers: { apikey: KEY } }).then(r => r.ok ? r.json() : []);
@@ -538,35 +538,93 @@
     doAct = function (btn, it, ll) { if (btn.dataset.cmt !== undefined) { openComments('archive', it.u); return; } return _do(btn, it, ll); };
   }
 
-  // ---------- keep saves and likes in sync with the account ----------
+  // ---------- keep everything in sync with the account (website and phone apps) ----------
+  // Likes and saves live in the reactions table. Addresses, recently viewed and blocked users live in user_prefs.
+  // Each device remembers what it last synced, so a removal on one device is removed everywhere.
   const SYNC = { ready: false };
+  const SKEY = k => 'nycmap.synced.' + (C.user ? C.user.id : '') + '.' + k;
+  const sget = k => { try { const v = localStorage.getItem(SKEY(k)); return v ? JSON.parse(v) : null; } catch (e) { return null; } };
+  const sput = (k, v) => { try { localStorage.setItem(SKEY(k), JSON.stringify(v)); } catch (e) {} };
   const snapMeta = r => { if (!r) return null; const m = {}; for (const k of ['u', 'i', 't', 'l', 's', 'll']) if (r[k] !== undefined) m[k] = r[k]; return m; };
   async function upsertReaction(kind, u, meta) {
     let r = await C.sb.from('reactions').upsert({ user_id: C.user.id, kind, target_type: 'archive', target_id: u, meta }, { onConflict: 'user_id,kind,target_type,target_id' });
     if (r.error && /meta/.test(r.error.message)) r = await C.sb.from('reactions').upsert({ user_id: C.user.id, kind, target_type: 'archive', target_id: u }, { onConflict: 'user_id,kind,target_type,target_id' });
   }
+  const delReaction = (kind, u) => C.sb.from('reactions').delete().match({ user_id: C.user.id, kind, target_type: 'archive', target_id: u });
   async function syncDown() {
     if (!C.user || SYNC.ready) return;
+    SYNC.ready = 'busy';
     let r = await C.sb.from('reactions').select('kind,target_id,meta').eq('user_id', C.user.id).eq('target_type', 'archive');
     if (r.error && /meta/.test(r.error.message)) r = await C.sb.from('reactions').select('kind,target_id').eq('user_id', C.user.id).eq('target_type', 'archive');
-    const server = r.data || [];
-    const local = { like: LIKES, save: SAVES }, have = new Set(server.map(x => x.kind + '|' + x.target_id));
+    if (r.error) { SYNC.ready = false; return; }
+    const server = r.data || [], local = { like: LIKES, save: SAVES };
+    const onServer = { like: new Set(), save: new Set() };
+    for (const x of server) if (onServer[x.kind]) onServer[x.kind].add(x.target_id);
     let changed = false;
-    for (const x of server) { const o = local[x.kind]; if (o && !o[x.target_id] && x.meta && x.meta.u) { o[x.target_id] = x.meta; changed = true; } }
-    for (const kind of ['like', 'save']) for (const [u, v] of Object.entries(local[kind])) if (!have.has(kind + '|' + u)) upsertReaction(kind, u, snapMeta(v));
+    for (const kind of ['like', 'save']) {
+      const prev = sget(kind) ? new Set(sget(kind)) : null, o = local[kind];
+      for (const u of Object.keys(o)) {
+        if (onServer[kind].has(u)) continue;
+        if (prev && prev.has(u)) { delete o[u]; changed = true; }      // removed on another device
+        else upsertReaction(kind, u, snapMeta(o[u]));                 // new on this device
+      }
+      for (const x of server) if (x.kind === kind && !o[x.target_id]) {
+        if (x.meta && x.meta.u) { o[x.target_id] = x.meta; changed = true; }
+        else if (prev && prev.has(x.target_id)) delReaction(kind, x.target_id); // removed here while offline
+      }
+      sput(kind, Object.keys(o));
+    }
     SYNC.last = { like: new Set(Object.keys(LIKES)), save: new Set(Object.keys(SAVES)) };
     SYNC.ready = true;
     if (changed) { _set('likes', LIKES); _set('saves', SAVES); if (dpanel.hidden) buildNav(); }
+    syncPrefs();
+  }
+  // Addresses, recently viewed, blocked users: whichever device changed them last wins.
+  const PREF = { t: 0 };
+  const prefData = () => ({ places: PLACES, recent: RECENT.slice(0, 40), blocked: BLK.get() });
+  function localPrefTime() { try { return +localStorage.getItem(SKEY('prefs_t')) || 0; } catch (e) { return 0; } }
+  function touchPrefs() { try { localStorage.setItem(SKEY('prefs_t'), String(Date.now())); } catch (e) {} pushPrefs(); }
+  async function syncPrefs() {
+    if (!C.user) return;
+    const { data, error } = await C.sb.from('user_prefs').select('data,updated_at').eq('user_id', C.user.id).maybeSingle();
+    if (error) return;
+    const st = data ? Date.parse(data.updated_at) : 0, lt = localPrefTime();
+    if (data && (st >= lt || !lt)) {
+      const d = data.data || {};
+      if (!lt) { // first sync on this device: keep anything saved here before signing in
+        const key = p => p.name + '|' + (p.ll || []).join(',');
+        const seen = new Set((d.places || []).map(key));
+        d.places = [...(d.places || []), ...PLACES.filter(p => !seen.has(key(p)))];
+        const ru = new Set(); d.recent = [...RECENT, ...(d.recent || [])].filter(x => x && x.u && !ru.has(x.u) && ru.add(x.u)).slice(0, 40);
+        d.blocked = [...new Set([...(d.blocked || []), ...BLK.get()])];
+      }
+      PLACES = d.places || []; RECENT = d.recent || [];
+      _set('places', PLACES); _set('recent', RECENT);
+      try { localStorage.setItem('cblocked', JSON.stringify(d.blocked || [])); } catch (e) {}
+      try { localStorage.setItem(SKEY('prefs_t'), String(Math.max(st, Date.now()))); } catch (e) {}
+      if (!lt) pushPrefs(true);
+      if (dpanel.hidden) buildNav();
+      if (C.layer) drawPosts();
+    } else pushPrefs(true);
+  }
+  function pushPrefs(now) {
+    if (SYNC.ready !== true || !C.user) return;
+    clearTimeout(PREF.t);
+    PREF.t = setTimeout(() => C.sb.from('user_prefs').upsert({ user_id: C.user.id, data: prefData(), updated_at: new Date().toISOString() }), now ? 0 : 1200);
   }
   const _set = store.set.bind(store);
   store.set = function (k, v) {
     _set(k, v);
-    if (!SYNC.ready || !C.user || (k !== 'likes' && k !== 'saves')) return;
+    if (SYNC.ready !== true || !C.user) return;
+    if (k === 'places' || k === 'recent') { touchPrefs(); return; }
+    if (k !== 'likes' && k !== 'saves') return;
     const kind = k === 'likes' ? 'like' : 'save', now = new Set(Object.keys(v)), prev = SYNC.last[kind];
     for (const u of now) if (!prev.has(u)) upsertReaction(kind, u, snapMeta(v[u]));
-    for (const u of prev) if (!now.has(u)) C.sb.from('reactions').delete().match({ user_id: C.user.id, kind, target_type: 'archive', target_id: u });
-    SYNC.last[kind] = now;
+    for (const u of prev) if (!now.has(u)) delReaction(kind, u);
+    SYNC.last[kind] = now; sput(kind, [...now]);
   };
+  // Pick up changes made on another device when coming back to this tab or app
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && C.user && SYNC.ready === true) { SYNC.ready = false; syncDown(); } });
 
 
   // ---------- public profiles ----------
