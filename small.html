@@ -926,7 +926,7 @@ html[data-theme=dark] .sc button.on{background:#44444a}
 </style>
 <script>window.PREF_OVERRIDE={pins:'s',show:'zoom'};</script>
 <script>/* reload once when a newer version of the map is live (GitHub Pages caches pages for 10 minutes) */
-window.BUILD='1795814115';(function(){try{fetch('ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=v.trim();if(v&&v!==window.BUILD&&sessionStorage.getItem('nycmap.rl')!==v){sessionStorage.setItem('nycmap.rl',v);location.reload()}}).catch(()=>{})}catch(e){}})();</script>
+window.BUILD='1795814515';(function(){try{fetch('ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=v.trim();if(v&&v!==window.BUILD&&sessionStorage.getItem('nycmap.rl')!==v){sessionStorage.setItem('nycmap.rl',v);location.reload()}}).catch(()=>{})}catch(e){}})();</script>
 </head>
 <body>
 <div id="app">
@@ -994,11 +994,13 @@ function dec(a){const o=[];let x=0,y=0;for(let i=0;i<a.length;i+=2){x+=a[i];y+=a
 
 const map=L.map('map',{preferCanvas:true,zoomControl:false,minZoom:3,maxZoom:19}).setView([40.745,-73.975],12);
 // ===== appearance settings =====
-const PREF_DEF={theme:'gray',map:'minimal',pscale:0.6,show:'zoom',view:'pins',pv:2};
+const PREF_DEF={theme:'gray',map:'minimal',pscale:0.6,show:'always',view:'pins',pv:3};
 const PREF=(()=>{let p={};try{p=JSON.parse(localStorage.getItem('nycmap.prefs'))||{}}catch(e){}
   if(!p.map){try{const o=JSON.parse(localStorage.getItem('nycmap.style'));if(o)p.map=o==='streets'?'standard':o}catch(e){}}
   const MIG={vintage:'detailed',auto:'detailed',standard:'detailed',dark:'detailed',light:'minimal',simple:'minimal',streets:'detailed'};if(MIG[p.map])p.map=MIG[p.map];if(p.pins&&p.pscale==null)p.pscale={s:1,m:1.6,l:2.2}[p.pins]||1;delete p.pins;
-  if(!(p.pv>=2)){if(!p.theme||p.theme==='auto')p.theme='gray';if(p.pscale==null||p.pscale==1)p.pscale=0.6;p.pv=2}
+  if(!(p.pv>=2)){if(!p.theme||p.theme==='auto')p.theme='gray'}
+  if(!(p.pv>=3)){p.pscale=0.6;p.pv=3} // smallest pins for everyone once
+  if(p.show==='zoom')p.show='always'; // 'Zoomed in' option removed
   return Object.assign({},PREF_DEF,window.PREF_OVERRIDE||{},p)})();
 const darkMQ=window.matchMedia?matchMedia('(prefers-color-scheme: dark)'):null;
 function isDark(){return PREF.theme==='dark'||(PREF.theme==='auto'&&darkMQ&&darkMQ.matches)}
@@ -1159,7 +1161,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&gal.classList.conta
 const layer=L.layerGroup().addTo(map);
 let markers=[];
 let SHOTS=[];
-const SHOWZ_OF={zoom:10,close:14};const showZ=()=>SHOWZ_OF[PREF.show]||0;const PIN_R={s:[1.6,2,2.5,3,3,3.5,4.5],m:[2.5,3.5,4.5,5.5,6.5,6.5,6.5],l:[4,5,6,7,8,8.5,9]};
+const SHOWZ_OF={zoom:10,close:14};const showZ=()=>SHOWZ_OF[PREF.show]||0;const sizeZ=()=>PREF.show==='close'?14:10;/* pins grow from fine dots starting at this zoom */const PIN_R={s:[1.6,2,2.5,3,3,3.5,4.5],m:[2.5,3.5,4.5,5.5,6.5,6.5,6.5],l:[4,5,6,7,8,8.5,9]};
 let FILT=false,FILTN=0;
 // while filtering, pins get bigger the fewer there are, at every zoom, so results are easy to spot
 // only a short list of results gets bigger pins; a filter that still leaves lots of pins keeps the normal size
@@ -1169,10 +1171,10 @@ function rad(n){const z=map.getZoom(),r=PIN_R.s.map(x=>x*PS());
   if(FILT&&FILTN<=BIGN){const b=Math.max(filtR(),r[Math.max(0,Math.min(6,z-11))]);return n>3?b+1.5:b}
   let b=r[Math.max(0,Math.min(6,z-11))];b=n>3?b+PS():b;
   // in the zoom-in modes pins start tiny where they first appear and grow to full size over the next few zoom levels
-  if(PREF.show!=='always'){const k=z-showZ(),G=PREF.show==='zoom'?[.22,.26,.32,.45,.65,.85]:[.3,.5,.75];if(k<G.length)b=Math.max(1,b*G[Math.max(0,k)])}
+  {const k=z-sizeZ(),G=PREF.show==='close'?[.3,.5,.75]:[.22,.26,.32,.45,.65,.85];if(k<G.length)b=Math.max(1,b*G[Math.max(0,k)])}
   return b}
-function pinOp(){if(FILT&&FILTN<=BIGN)return .95;if(PREF.show==='always')return .92;const k=map.getZoom()-showZ();return k<=1?.6:k<=3?.75:.92}
-function pinW(r){const w=Math.min(1.5,.5+.35*PS());if(FILT&&FILTN<=BIGN)return w+.3;return r?(r<2.2||(PREF.show!=='always'&&map.getZoom()-showZ()<=2)?0:Math.min(w,Math.max(.4,r*.3))):w}
+function pinOp(){if(FILT&&FILTN<=BIGN)return .95;const k=map.getZoom()-sizeZ();return k<=1?.6:k<=3?.75:.92}
+function pinW(r){const w=Math.min(1.5,.5+.35*PS());if(FILT&&FILTN<=BIGN)return w+.3;return r?(r<2.2||(map.getZoom()-sizeZ()<=2)?0:Math.min(w,Math.max(.4,r*.3))):w}
 let lastZ=null;map.on('zoomend',()=>{const z=map.getZoom();if(lb.classList.contains('on')||(lastZ!==null&&(lastZ>=14)===(z>=14)&&z<14&&(PREF.show==='always'||(lastZ>=showZ())===(z>=showZ())))){markers.forEach(m=>{const r=rad(m._n||1);m.setRadius(r);m.setStyle({weight:pinW(r),fillOpacity:pinOp()})})}else{render()}lastZ=z});
 function Y(it){return it.y||FILMS[it.f].y}
 function T(it){return it.t||FILMS[it.f].t}
@@ -1474,8 +1476,8 @@ function appearHTML(){
   return `<div class="set">
   <h4>Theme</h4>${seg('theme',[['light','Light'],['gray','Gray'],['dark','Dark'],['auto','Auto']])}
   <p class="hint">Auto uses Gray or Dark to match your device.</p>
-  <h4>Show pins</h4>${seg('show',[['always','Always'],['zoom','Zoomed in'],['close','Up close']])}
-  <p class="hint">Zoomed in shows small pins from the city view, Up close from a few blocks. They start as small dots and grow as you zoom in. Searches and filters always show their pins.</p>
+  <h4>Show pins</h4>${seg('show',[['always','Always'],['close','Up close']])}
+  <p class="hint">Always shows pins at every zoom level. Up close shows them once you zoom in a few blocks. Searches and filters always show their pins.</p>
   <button class="btn ghost reset" data-resetpref>Reset to defaults</button></div>`}
 
 // ===== map controls: zoom + locate =====
@@ -1499,7 +1501,7 @@ const HEATBTN=new HeatBtn().addTo(map);
   btn.innerHTML='<svg viewBox="0 -1.5 24 24"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>';
   const card=document.createElement('div');card.id='layersCard';card.hidden=true;card.setAttribute('role','dialog');card.setAttribute('aria-label','Map type');
   const hb=document.querySelector('.heatbtn').parentNode;hb.parentNode.insertBefore(wrap,hb.nextSibling);L.DomEvent.disableClickPropagation(wrap);document.getElementById('map').parentNode.appendChild(card);
-  const draw=()=>{const P=PAL[isDark()?'dark':'light'];
+  const draw=()=>{const P=PAL[isDark()?'dark':isGray()?'gray':'light'];
     const sv=(det)=>`url(data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 80'><rect width='80' height='80' fill='${P.land}'/><path d='M58 0h22v80H46z' fill='${P.water}'/><rect x='8' y='46' width='22' height='18' rx='2' fill='${P.park}'/><g stroke='${P.case}' stroke-width='5'><path d='M0 34h58M0 72h52M34 0v80'/></g><g stroke='${P.minor}' stroke-width='3.5'><path d='M0 34h58M0 72h52M34 0v80'/></g>${det?`<path d='M0 12L64 62' stroke='${P.priC}' stroke-width='7'/><path d='M0 12L64 62' stroke='${P.pri}' stroke-width='5'/><circle cx='18' cy='20' r='3.5' fill='#c8794a'/><circle cx='48' cy='50' r='3.5' fill='#5b8fb0'/>`:''}</svg>`).replace(/'/g,'%27')})`;
     const T={minimal:sv(0),detailed:sv(1),satellite:'url(https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/15/12318/9650)'};
     const cur=PREF.map;
