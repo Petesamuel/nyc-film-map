@@ -71,3 +71,11 @@
 - Reject anything with a watermark, Getty/agency/newspaper credit, or a famous recognizable image, using the reason "Copyright: not theirs to share" (counts as a strike).
 - Act fast on removal requests; formal DMCA notices are flagged in the admin inbox.
 - Optional: add a short "How to review" note inside the admin panel so the rule is right where approvals happen.
+
+## Nov 27: email done
+- Inbound: support@, hello@, privacy@pastpostapp.com forward to Pete's Gmail (Cloudflare Email Routing).
+- Outbound: Supabase sends via Resend SMTP as "PastPost <noreply@pastpostapp.com>". Domain verified in Resend (DKIM, SPF via send/rsend CNAMEs, DMARC p=none).
+- Branded templates: magic link + confirm sign up, both include link and 6-digit code. App sign-in screen accepts the code.
+- Resend free plan: 3,000 emails/month, 100/day. Supabase email rate limit after custom SMTP defaults to 30/hour; raise in Auth > Rate Limits if needed.
+- Admin dashboard live at /admin (migration 0009).
+- Optional later: Gmail "Send mail as" support@pastpostapp.com via smtp.resend.com so replies come from the PastPost address.
