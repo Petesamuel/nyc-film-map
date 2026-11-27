@@ -206,7 +206,7 @@
       <div class="dsep"></div>`;
     dnav.insertAdjacentHTML('afterbegin', top);
     const IOS = NATIVE && window.Capacitor.getPlatform && window.Capacitor.getPlatform() === 'ios';
-    if (SUPPORT_ON && !IOS) dnav.insertAdjacentHTML('beforeend', `<div class="dsep"></div><a class="ditem" href="support/">${IC.heart || ''}Support PastPost</a>`);
+    if (SUPPORT_ON && !IOS) { const f = dnav.querySelector('.dfoot'); (f || dnav).insertAdjacentHTML(f ? 'beforebegin' : 'beforeend', `<a class="ditem" href="support/">${IC.heart || ''}Support PastPost</a>`); }
   };
   const _openPanel = openPanel;
   openPanel = function (p) {

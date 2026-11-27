@@ -833,6 +833,7 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #1d1c
 .ditem svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 21px;color:var(--muted)}
 .ditem .n{margin-left:auto;color:var(--muted);font-size:13px}
 .dsep{height:1px;background:var(--line);margin:8px 20px}
+.dfoot{display:flex;gap:20px;padding:14px 20px 12px 55px;font-size:13px}.dfoot a{color:var(--muted);text-decoration:none}.dfoot a:hover{color:var(--ink)}
 .dpanel{display:flex;flex-direction:column;flex:1;min-height:0}
 .back{display:flex;align-items:center;gap:8px;border:0;background:none;font:inherit;font-weight:700;font-size:16px;padding:14px 16px;cursor:pointer;color:var(--ink);border-bottom:1px solid var(--line)}
 .back svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2}
@@ -849,7 +850,7 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #1d1c
 .btn.ghost{background:var(--paper);color:var(--ink);border:1px solid var(--line)}
 .seg{display:flex;gap:8px;padding:12px 20px;flex-wrap:wrap}
 .about{padding:6px 20px 20px;font-size:14px;line-height:1.55;color:var(--ink)}
-.about p{margin:0 0 12px}.about ul{margin:0;padding:0;list-style:none}.about li{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:13.5px}.about li span{color:var(--muted)}.about li a{color:var(--ink);font-weight:600;text-decoration:underline;text-decoration-color:#c9c5be;text-underline-offset:3px}.about li a:hover{text-decoration-color:var(--ink)}
+.about p{margin:0 0 12px}.about ul{margin:0;padding:0;list-style:none}.about li{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:13.5px}.about li{gap:12px}.about li span{color:var(--muted);white-space:nowrap}.about li a{color:var(--ink);font-weight:600;text-decoration:underline;text-decoration-color:#c9c5be;text-underline-offset:3px}.about li a:hover{text-decoration-color:var(--ink)}
 /* bottom sheet */
 #sheet{position:fixed;left:0;right:0;bottom:0;z-index:3100;background:var(--paper);border-radius:12px 12px 0 0;box-shadow:0 -6px 28px rgba(29,28,26,.18);max-height:72vh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}
 @media (min-width:700px){#sheet{left:50%;right:auto;width:420px;transform:translateX(-50%);bottom:24px;border-radius:12px}}
@@ -927,7 +928,7 @@ html[data-theme=dark] .sc button.on{background:#44444a}
 </style>
 <script>window.PREF_OVERRIDE={pins:'s',show:'zoom'};</script>
 <script>/* reload once when a newer version of the map is live (GitHub Pages caches pages for 10 minutes) */
-window.BUILD='1795817124';(function(){try{fetch('ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=v.trim();if(v&&v!==window.BUILD&&sessionStorage.getItem('nycmap.rl')!==v){sessionStorage.setItem('nycmap.rl',v);location.reload()}}).catch(()=>{})}catch(e){}})();</script>
+window.BUILD='1795819198';(function(){try{fetch('ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=v.trim();if(v&&v!==window.BUILD&&sessionStorage.getItem('nycmap.rl')!==v){sessionStorage.setItem('nycmap.rl',v);location.reload()}}).catch(()=>{})}catch(e){}})();</script>
 </head>
 <body>
 <div id="app">
@@ -1319,7 +1320,10 @@ const IC={heart:'<svg viewBox="0 0 24 24"><path d="M12 20s-7-4.4-9.2-8.6C1.3 8.4
  dice:'<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1.2"/><circle cx="15" cy="15" r="1.2"/><circle cx="15" cy="9" r="1.2"/><circle cx="9" cy="15" r="1.2"/></svg>',
  layers:'<svg viewBox="0 0 24 24"><path d="M12 4l9 5-9 5-9-5z"/><path d="M3 14l9 5 9-5"/></svg>',info:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5M12 8h.01"/></svg>',
  link:'<svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>',
- x:'<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>'};
+ x:'<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+ book:'<svg viewBox="0 0 24 24"><path d="M5 5.5A1.5 1.5 0 0 1 6.5 4H19v14H6.5A1.5 1.5 0 0 0 5 19.5z"/><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3"/></svg>',
+ chat:'<svg viewBox="0 0 24 24"><path d="M4 5h16v11H10l-4 3.5V16H4z"/></svg>',
+ flag:'<svg viewBox="0 0 24 24"><path d="M5.5 21V4.5"/><path d="M5.5 4.5h12l-2.5 4 2.5 4h-12"/></svg>'};
 function actsHTML(it,dark){const l=!!LIKES[it.u],s=!!SAVES[it.u];
   return `<div class="acts${dark?' lbin':''}"><button class="act${l?' on':''}" data-like aria-pressed="${l}">${IC.heart}${l?'Liked':'Like'}</button><button class="act${s?' on':''}" data-save aria-pressed="${s}">${IC.save}${s?'Saved':'Save'}</button><button class="act" data-share>${IC.share}Share</button></div>`}
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),1800)}
@@ -1355,19 +1359,16 @@ function buildNav(){const n=o=>Object.keys(o).length;
   <button class="ditem" data-p="appear">${IC.layers}Appearance</button>
   <button class="ditem" data-a="share">${IC.link}Copy link to this view</button>
   <div class="dsep"></div>
-  <button class="ditem" data-p="aboutmenu">${IC.info}About</button>`}
+  <a class="ditem" href="about/">${IC.info}About PastPost</a>
+  <button class="ditem" data-p="about">${IC.book}Sources and credits</button>
+  <a class="ditem" href="feedback/">${IC.chat}Send feedback</a>
+  <a class="ditem" href="takedown/">${IC.flag}Request removal</a>
+  <div class="dfoot"><a href="terms/">Terms of use</a><a href="privacy/">Privacy</a></div>`}
 dnav.onclick=e=>{const b=e.target.closest('.ditem');if(!b||b.tagName==='A')return;if(b.dataset.p)openPanel(b.dataset.p);else action(b.dataset.a)};
 document.getElementById('dback').onclick=showNav;
 function shotRow(r,removeKind){return `<div class="row2" data-u="${esc(r.u)}" data-ll="${r.ll}">${r.i?`<img src="${esc(imgUrl(r.i,200))}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ph'}))">`:'<div class="ph"></div>'}<div><b>${esc(r.t)}</b><span>${esc(r.l)} · ${esc(r.s)}</span></div>${removeKind?`<button class="ico x" data-rm="${removeKind}" aria-label="Remove">${IC.x}</button>`:''}</div>`}
 function openPanel(p){const body=dpanel.querySelector('.dbody'),title=dpanel.querySelector('.back span');dnav.hidden=true;dpanel.hidden=false;
   const list=(o,kind,empty)=>{const v=Array.isArray(o)?o:Object.values(o).reverse();body.innerHTML=v.length?v.map(r=>shotRow(r,kind)).join(''):`<p class="empty">${empty}</p>`};
-  if(p==='aboutmenu'){title.textContent='About';body.innerHTML=`<div class="dnav" style="padding-top:4px">
-    <a class="ditem" href="about/">${IC.info}About this map</a>
-    <button class="ditem" data-sub="about">${IC.layers}Sources and credits</button>
-    <a class="ditem" href="feedback/">${IC.link}Send feedback</a>
-    <a class="ditem" href="takedown/">${IC.link}Request removal</a>
-    <a class="ditem" href="terms/">${IC.link}Terms of use</a>
-    <a class="ditem" href="privacy/">${IC.link}Privacy</a></div>`;body.querySelector('[data-sub]').onclick=()=>openPanel('about');return}
   if(p==='saved'){title.textContent='Saved';list(SAVES,'save','Shots you save show up here. Open a pin and tap Save.')}
   if(p==='liked'){title.textContent='Liked';list(LIKES,'like','Shots you like show up here. Open a pin and tap Like.')}
   if(p==='recent'){title.textContent='Recently viewed';list(RECENT,'','Pins you open show up here.');if(RECENT.length)body.insertAdjacentHTML('beforeend','<div class="form"><button class="btn ghost" data-clear="recent">Clear history</button></div>')}
@@ -1378,8 +1379,8 @@ function openPanel(p){const body=dpanel.querySelector('.dbody'),title=dpanel.que
     body.querySelector('#placeAdd').onclick=addPlace;body.querySelector('#placeIn').onkeydown=e=>{if(e.key==='Enter')addPlace()};
     body.querySelector('#placeHere').onclick=()=>locate(ll=>{PLACES.push({name:'My location',ll});store.set('places',PLACES);openPanel('places')})}
   if(p==='appear'){title.textContent='Appearance';body.innerHTML=appearHTML()}
-  if(p==='about'){title.textContent='About and sources';const c={};PINS.forEach(pp=>pp.x.forEach(it=>{c[it.s]=(c[it.s]||0)+1}));
-    body.innerHTML=`<div class="about"><p>Every pin is a real place where a film was shot or an old photo was taken. Tap a photo to see it full screen, and use Next to walk to the nearest shots.</p><p>Photos and research belong to the sites and archives below. Each shot links back to its source.</p><p><a href="about/">About this map</a> · <a href="feedback/">Feedback</a> · <a href="takedown/">Request removal</a> · <a href="terms/">Terms</a> · <a href="privacy/">Privacy</a></p><ul>${Object.entries(c).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<li>${SOURCE_URLS[SOURCES[k]]?`<a href="${esc(SOURCE_URLS[SOURCES[k]])}" target="_blank" rel="noopener">${esc(SOURCES[k])}</a>`:esc(SOURCES[k])}<span>${v.toLocaleString()} shots</span></li>`).join('')}</ul></div>`}
+  if(p==='about'){title.textContent='Sources and credits';const c={};PINS.forEach(pp=>pp.x.forEach(it=>{c[it.s]=(c[it.s]||0)+1}));
+    body.innerHTML=`<div class="about"><p>Every pin is a real place where a film was shot or an old photo was taken. Tap a photo to see it full screen, and use Next to walk to the nearest shots.</p><p>Photos and research belong to the sites and archives below. Each shot links back to its source.</p><ul>${Object.entries(c).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<li>${SOURCE_URLS[SOURCES[k]]?`<a href="${esc(SOURCE_URLS[SOURCES[k]])}" target="_blank" rel="noopener">${esc(SOURCES[k])}</a>`:esc(SOURCES[k])}<span>${v.toLocaleString()} shots</span></li>`).join('')}</ul></div>`}
 }
 dpanel.onclick=e=>{const rm=e.target.closest('[data-rm]'),row=e.target.closest('.row2'),st=e.target.closest('[data-style]'),rmp=e.target.closest('[data-rmp]'),cl=e.target.closest('[data-clear]');
   if(rm){const u=rm.closest('.row2').dataset.u;if(rm.dataset.rm==='save'){delete SAVES[u];store.set('saves',SAVES);openPanel('saved')}else{delete LIKES[u];store.set('likes',LIKES);openPanel('liked')}return}
