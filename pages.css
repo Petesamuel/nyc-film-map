@@ -55,3 +55,6 @@ footer{border-top:1px solid var(--line);margin-top:56px;padding-top:20px;font-si
 .amt.on{border-color:var(--ink);background:var(--ink);color:#fff}
 .give .btnlink{display:block;text-align:center}
 @media (max-width:340px){.amts{grid-template-columns:repeat(3,1fr)}}
+
+.back .bmark{width:30px;height:auto;display:block}
+.back{font-size:17px;font-weight:700;gap:10px}
