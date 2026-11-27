@@ -926,7 +926,7 @@ html[data-theme=dark] .sc button.on{background:#44444a}
 .set .reset{margin-top:22px;width:100%}
 </style>
 <script>/* reload once when a newer version of the map is live (GitHub Pages caches pages for 10 minutes) */
-window.BUILD='1795816587';(function(){try{fetch('ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=v.trim();if(v&&v!==window.BUILD&&sessionStorage.getItem('nycmap.rl')!==v){sessionStorage.setItem('nycmap.rl',v);location.reload()}}).catch(()=>{})}catch(e){}})();</script>
+window.BUILD='1795817124';(function(){try{fetch('ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=v.trim();if(v&&v!==window.BUILD&&sessionStorage.getItem('nycmap.rl')!==v){sessionStorage.setItem('nycmap.rl',v);location.reload()}}).catch(()=>{})}catch(e){}})();</script>
 </head>
 <body>
 <div id="app">
@@ -1433,6 +1433,20 @@ function glStyle(pal,minimal){if(pal==='sat')return satStyle();const P=PAL[pal],
   // label timing like Google Maps (map zoom here is one step below the page zoom): avenues from the borough view, local streets from the neighborhood view
   const MZ={'highway-name-major':11,'highway-name-minor':13,'highway-name-path':14.5,poi_r1:14,poi_r7:15,poi_r20:16},TS=['interpolate',['linear'],['zoom'],11,10,13,11,15,13,17,15];
   for(const l of st.layers){if(MZ[l.id]!==undefined)l.minzoom=MZ[l.id];if(/^highway-name/.test(l.id)){l.layout['text-size']=TS;l.layout['symbol-spacing']=220}}
+  // minimal map: names appear in stages as you zoom in (map zoom = page zoom - 1).
+  // City view: only city, state and country names. Then boroughs, towns and big water. Then avenues, neighborhoods, local streets.
+  if(minimal){
+    const LI=(a)=>['interpolate',['linear'],['zoom'],...a];
+    const SZ={label_city:LI([4,10,8,12,11,14,15,16]),label_city_capital:LI([4,10,8,12,11,14,15,16]),label_town:LI([12,11,15,13]),label_village:LI([13,10.5,16,12]),label_other:LI([12,10.5,16,12]),
+      water_name_point_label:LI([10,10,15,12]),water_name_line_label:LI([12,10.5,16,12]),waterway_line_label:LI([14,10,17,11.5]),label_state:LI([5,10,8,12])};
+    const MZ2={label_town:12,label_village:13.2,label_other:13,water_name_point_label:12,water_name_line_label:12,waterway_line_label:14,'highway-name-major':12,'highway-name-minor':13.6,'highway-name-path':99};
+    st.layers=st.layers.filter(l=>l.id!=='airport'&&!/aerodrome/.test(l.id));
+    const i=st.layers.findIndex(l=>l.id==='label_other');
+    if(i>=0){const o=st.layers[i],bor=JSON.parse(JSON.stringify(o));bor.id='label_borough';bor.filter=['in',['get','class'],['literal',['borough','suburb','quarter']]];bor.minzoom=11.6;bor.layout['text-size']=LI([11.6,11,15,13]);
+      o.filter=['all',o.filter||true,['!',['in',['get','class'],['literal',['borough','suburb','quarter']]]]];st.layers.splice(i,0,bor)}
+    for(const l of st.layers){if(MZ2[l.id]!==undefined)l.minzoom=MZ2[l.id];if(SZ[l.id]&&l.layout)l.layout['text-size']=SZ[l.id];
+      if(l.type==='symbol'&&l.layout&&/^label_(other|village|borough)$/.test(l.id))l.layout['text-transform']='none'}
+  }
   // "park" also holds protected areas such as historic districts (NoHo, SoHo): only shade real parks
   st.layers.forEach(l=>{if(l.id==='park'||l.id==='park_outline')l.filter=['all',l.filter||true,['!',['in',['get','class'],['literal',['protected_area','historic_district','national_monument']]]]]});
   for(const l of st.layers){const id=l.id,p=l.paint=l.paint||{};
