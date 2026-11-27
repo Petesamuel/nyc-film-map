@@ -130,8 +130,6 @@
   #cauth h2{font-size:22px;margin:0 0 6px;font-weight:700}
   #cauth p{margin:0 0 18px;font-size:14px;color:#6a6a6a;line-height:1.45}
   .sso{display:grid;gap:10px}
-  .ahero{width:56px;height:56px;border-radius:12px;background:var(--soft,#f5f4f1);color:var(--ink,#1d1c1a);display:grid;place-items:center;margin:0 0 16px}
-  .ahero svg{display:block}
   .gbtn-g{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:44px;border:1px solid #747775;border-radius:12px;background:#fff;color:#1f1f1f;font:500 14px Roboto,Arial,sans-serif;cursor:pointer}
   .gbtn-g:hover{background:#f8f9fa;box-shadow:0 1px 2px rgba(60,64,67,.3)}
   .gbtn-g svg{width:20px;height:20px}
@@ -231,13 +229,10 @@
   let AUTH = null;
   // What the login screen says depends on why it opened, like other apps do
   const AUTH_CTX = {
-    post: { icon: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1.5-2h5.6l1.5 2h2.2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.75" r="3.25"/></svg>',
-      title: 'Share your photos of the city', text: 'Log in to add your own photos to the map and pin them to the corner where they were taken.' },
-    comment: { icon: '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12.5a7.5 7.5 0 0 1-11 6.6L4.5 20l1-4.2A7.5 7.5 0 1 1 20 12.5z"/></svg>',
-      title: 'Join the conversation', text: 'Log in to comment on photos and share what you know about a place.' },
-    '': { icon: '', title: 'Welcome to PastPost', text: 'Log in to share your own photos of the city and see them on the map.' }
+    post: { title: 'Post your photos of the city', text: 'Log in to post your own photos and pin them to the corner where they were taken.' },
+    comment: { title: 'Join the conversation', text: 'Log in to comment on posts and share what you know about a place.' },
+    '': { title: 'Welcome to PastPost', text: 'Log in to post your own photos of the city and see them on the map.' }
   };
-  AUTH_CTX[''].icon = "<svg viewBox=\"0 0 1983 1535\" width=\"30\" height=\"23.2\" aria-hidden=\"true\"><path fill=\"currentColor\" fill-rule=\"evenodd\" d=\"M697.8 1534.0C674.5 1529.9 660.0 1514.4 660.0 1493.6C660.0 1484.6 661.3 1480.1 669.5 1460.5C673.2 1451.7 677.4 1441.1 679.0 1437.0C680.6 1432.9 686.9 1417.1 693.0 1402.0C699.1 1386.9 707.7 1365.5 712.1 1354.5C716.5 1343.5 720.5 1333.6 721.0 1332.5C723.1 1327.9 730.0 1311.0 732.5 1304.5C735.2 1297.4 741.3 1282.4 751.3 1258.5C754.3 1251.3 759.5 1238.8 762.8 1230.5C766.1 1222.2 771.6 1208.8 775.0 1200.5C778.4 1192.2 783.6 1179.4 786.6 1172.0C789.7 1164.6 794.4 1153.1 797.2 1146.5C800.0 1139.9 804.5 1128.9 807.2 1122.0C810.0 1115.1 815.0 1102.8 818.5 1094.5C822.0 1086.2 827.5 1073.0 830.8 1065.0C834.1 1057.0 839.9 1043.3 843.5 1034.5C847.2 1025.7 852.6 1012.7 855.5 1005.5C858.3 998.4 864.2 984.2 868.5 974.0C887.5 928.8 898.1 903.5 903.5 890.5C906.6 882.8 910.9 872.7 913.1 868.0C919.0 854.9 926.1 837.7 926.3 836.0C926.6 833.8 914.7 833.6 878.5 834.9C827.4 836.8 793.9 838.0 758.0 839.0C739.0 839.5 710.7 840.4 695.0 841.0C679.3 841.5 642.4 842.5 613.0 843.1C583.6 843.7 558.7 844.7 557.8 845.2C555.4 846.4 555.5 850.9 557.9 858.5C559.0 861.8 568.0 888.6 578.0 918.0C619.7 1040.7 618.8 1037.5 616.9 1047.6C615.6 1054.6 611.5 1060.0 605.0 1063.3C599.9 1065.9 598.8 1066.1 590.5 1065.7C580.6 1065.3 579.9 1065.0 541.0 1046.2C531.9 1041.9 522.0 1037.2 519.0 1035.8C503.9 1028.8 498.0 1026.0 480.0 1017.3C469.3 1012.0 457.4 1006.3 453.5 1004.5C449.6 1002.7 442.4 999.3 437.5 997.0C432.6 994.7 425.4 991.3 421.5 989.5C410.7 984.5 395.6 977.2 370.6 965.1C358.1 959.0 347.6 954.0 347.5 954.0C347.3 954.0 342.1 951.6 335.9 948.6C329.6 945.7 320.7 941.4 316.0 939.2C311.3 937.0 293.8 928.6 277.1 920.6C260.4 912.6 246.6 906.0 246.4 906.0C246.3 906.0 237.2 901.7 226.3 896.4C204.7 885.9 186.6 877.2 172.5 870.5C167.6 868.1 155.0 862.1 144.7 857.1C134.3 852.1 125.7 848.0 125.5 848.0C124.9 848.0 107.8 839.9 84.8 828.6C72.8 822.8 62.8 818.0 62.6 818.0C62.4 818.0 50.4 812.2 35.9 805.1C2.9 789.0 0.0 786.3 0.0 772.2C0.0 763.9 3.0 757.0 9.1 751.5C11.7 749.2 23.4 742.9 40.7 734.4C55.8 727.0 68.4 721.0 68.5 721.0C68.7 721.0 84.9 713.1 104.7 703.4C124.4 693.7 143.0 684.7 146.0 683.3C149.0 681.9 167.9 672.8 188.0 663.0C208.1 653.3 229.0 643.1 234.5 640.5C249.8 633.2 276.6 620.2 296.0 610.8C313.2 602.4 328.2 595.2 351.0 584.3C357.3 581.3 372.2 574.0 384.0 568.1C395.8 562.3 409.8 555.5 415.0 553.1C428.0 547.1 443.9 539.5 473.5 525.0C487.2 518.3 503.5 510.4 509.5 507.5C515.5 504.6 527.5 498.9 536.0 494.8C544.5 490.7 554.4 486.0 558.0 484.4C561.6 482.8 573.0 477.2 583.5 471.9C605.8 460.7 613.1 458.0 621.5 458.0C629.0 458.0 636.9 461.7 641.3 467.2C645.6 472.6 646.1 481.1 642.7 490.5C640.1 497.8 633.1 513.7 625.3 530.0C622.8 535.2 618.6 544.5 616.0 550.5C613.4 556.5 608.4 567.6 605.0 575.0C601.6 582.4 595.1 596.8 590.6 607.0C586.0 617.2 580.0 630.8 577.0 637.3C573.4 645.4 572.1 649.5 572.8 650.2C573.5 650.9 642.0 650.9 788.4 650.3C976.9 649.6 1003.1 649.3 1004.3 648.0C1005.1 647.2 1010.6 635.9 1016.5 623.0C1026.0 602.2 1034.3 585.0 1052.3 548.1C1062.8 526.9 1088.0 479.7 1104.5 450.5C1173.5 328.8 1236.2 242.2 1303.9 175.1C1352.1 127.3 1393.9 94.6 1442.2 67.0C1495.4 36.4 1541.8 19.0 1600.5 7.6C1675.3 -6.9 1762.9 -0.2 1826.7 25.0C1856.6 36.8 1888.7 56.9 1909.4 76.9C1950.8 116.8 1975.1 166.7 1981.6 225.5C1984.3 250.1 1982.6 286.5 1977.6 309.0C1969.5 345.9 1959.3 374.4 1943.3 405.5C1939.5 412.7 1939.0 413.8 1932.5 425.5C1901.5 481.2 1845.8 542.1 1781.5 590.7C1709.4 645.1 1616.9 694.6 1524.5 728.3C1480.3 744.5 1475.2 746.1 1430.0 758.3C1396.9 767.3 1379.5 771.4 1346.5 777.9C1287.2 789.7 1256.3 794.1 1182.0 801.1C1169.4 802.3 1158.9 803.8 1158.2 804.4C1157.5 805.1 1156.1 807.8 1155.1 810.5C1154.1 813.3 1150.1 823.4 1146.3 833.0C1142.5 842.6 1137.4 855.5 1135.1 861.5C1132.7 867.5 1128.9 877.2 1126.5 883.0C1124.1 888.8 1121.0 896.6 1119.5 900.5C1113.0 917.4 1109.7 926.0 1107.0 932.5C1105.4 936.4 1103.0 942.4 1101.7 946.0C1098.8 953.6 1092.3 970.2 1083.5 992.5C1071.8 1022.2 1065.8 1037.5 1063.8 1043.0C1062.7 1046.0 1061.0 1050.3 1060.0 1052.5C1057.7 1057.7 1043.0 1094.9 1043.0 1095.5C1043.0 1095.8 1038.2 1108.0 1032.4 1122.7C1026.6 1137.5 1020.3 1153.3 1018.5 1158.0C1016.7 1162.7 1012.3 1173.9 1008.7 1183.0C1005.1 1192.1 1000.1 1204.9 997.5 1211.5C986.9 1238.6 975.6 1267.1 972.0 1276.0C969.8 1281.2 966.1 1290.7 963.7 1297.0C961.2 1303.3 957.5 1313.0 955.3 1318.5C953.1 1324.0 949.4 1333.5 947.0 1339.5C944.7 1345.5 939.6 1358.4 935.8 1368.0C931.9 1377.6 925.7 1393.6 922.0 1403.5C918.2 1413.4 912.5 1428.0 909.3 1436.0C906.0 1444.0 898.9 1461.7 893.5 1475.4C888.1 1489.1 882.0 1502.8 880.0 1505.9C874.9 1513.8 865.6 1521.9 856.4 1526.7C841.2 1534.6 845.5 1534.2 770.0 1534.5C732.9 1534.7 700.4 1534.5 697.8 1534.0ZM1248.1 624.0C1265.4 620.7 1272.9 619.1 1288.0 615.4C1293.8 613.9 1300.1 612.4 1302.0 612.0C1303.9 611.6 1311.6 609.6 1319.0 607.6C1326.4 605.7 1333.6 603.8 1335.0 603.4C1342.6 601.5 1370.0 593.0 1387.0 587.3C1419.3 576.5 1433.5 571.0 1478.5 551.7C1487.4 547.9 1527.2 527.8 1537.0 522.2C1571.0 502.7 1587.8 492.1 1611.8 475.1C1673.5 431.3 1727.9 375.0 1755.2 326.5C1766.0 307.3 1772.3 293.5 1776.0 280.5C1780.4 265.0 1781.1 243.0 1777.6 229.5C1775.2 220.6 1768.3 207.6 1762.2 200.9C1752.4 190.1 1736.7 180.9 1720.4 176.6C1711.1 174.0 1687.5 171.0 1677.4 171.0C1657.1 171.0 1628.1 176.2 1605.0 184.1C1551.8 202.1 1503.2 232.5 1453.2 278.9C1441.2 290.0 1413.1 319.4 1401.4 333.1C1379.5 358.7 1352.4 395.9 1334.8 424.5C1331.7 429.4 1325.4 439.6 1320.8 447.0C1304.5 472.9 1255.5 565.3 1244.7 590.5C1242.8 594.9 1240.1 601.0 1238.7 604.0C1228.4 626.3 1228.2 627.0 1231.4 627.0C1232.1 627.0 1239.6 625.7 1248.1 624.0Z\"/></svg>";
   function openAuth(why) {
     const cx = AUTH_CTX[why] || Object.assign({}, AUTH_CTX[''], why ? { text: why } : {});
     closeDrawer();
@@ -249,7 +244,6 @@
     }
     AUTH.hidden = false;
     AUTH.innerHTML = `<div class="box"><header><button type="button" data-x aria-label="Close">${XICO}</button>Log in or sign up</header><div class="in">
-      <div class="ahero">${cx.icon}</div>
       <h2>${cx.title}</h2>
       <p>${cx.text}</p>
       <div class="sso">${SSO.apple ? `<button type="button" class="gbtn-g" data-sso="apple">${ALOGO}<span>Continue with Apple</span></button>` : ''}${SSO.google ? `<button type="button" class="gbtn-g" data-sso="google">${GLOGO}<span>Continue with Google</span></button>` : ''}${SSO.facebook ? `<button type="button" class="gbtn-g" data-sso="facebook">${FLOGO}<span>Continue with Facebook</span></button>` : ''}</div>
@@ -312,7 +306,7 @@
       <label>About you <small>optional</small><textarea id="pBio" maxlength="300">${esc(p.bio || '')}</textarea></label>
       <div class="row"><button class="btn" id="pSave">Save profile</button><button class="btn ghost" id="pOut">Log out</button></div>
       <div id="pMsg"></div></div>
-      <div class="about" style="padding-top:0"><p><b>Your photos</b></p></div>
+      <div class="about" style="padding-top:0"><p><b>Your posts</b></p></div>
       ${(mine || []).length ? mine.map(m => `<div class="row2" data-cpost="${m.id}"><img src="${PUB + esc(m.thumb_key || m.image_key)}" alt=""><div><b>${esc(m.title)}<span class="cpill ${m.status}">${{ pending: 'In review', approved: 'Live', rejected: 'Not approved', removed: 'Removed' }[m.status]}</span></b><span>${new Date(m.created_at).toLocaleDateString()}${m.mod_note ? ' · ' + esc(m.mod_note) : ''}</span></div><button class="rm" data-delpost="${m.id}" aria-label="Delete photo">${IC.x}</button></div>`).join('') : '<p class="empty">Photos you add show up here. <a href="#" data-goadd>Add your first photo</a>.</p>'}`;
     body.querySelector('#pSave').onclick = async () => {
       const u = body.querySelector('#pUser').value.trim().toLowerCase(), msg = body.querySelector('#pMsg');
@@ -324,7 +318,7 @@
     };
     body.insertAdjacentHTML('beforeend', `<div class="about"><p><button class="cdanger" id="pDel">Delete account</button></p></div>`);
     body.querySelector('#pDel').onclick = async () => {
-      if (!await ask({ title: 'Delete your account?', message: 'This permanently removes your profile, the photos you shared, your comments and your saved shots. This can\u2019t be undone.', ok: 'Delete account', danger: true })) return;
+      if (!await ask({ title: 'Delete your account?', message: 'This permanently removes your profile, the photos you posted, your comments and your saved shots. This can\u2019t be undone.', ok: 'Delete account', danger: true })) return;
       try {
         const { data: files } = await C.sb.storage.from('uploads').list(C.user.id, { limit: 1000 });
         if (files && files.length) await C.sb.storage.from('uploads').remove(files.map(f => C.user.id + '/' + f.name));
@@ -353,7 +347,7 @@
 
   // ---------- add a photo ----------
   function addPanel(body, title) {
-    title.textContent = 'Add a photo';
+    title.textContent = 'New post';
     if (!C.user) { signInForm(body, 'post'); return; }
     body.innerHTML = `<div class="cf">
       <p class="note">Share an old photo of the city, or one you took. It goes on the map after a quick review.</p>
@@ -367,8 +361,8 @@
       <p class="note" id="aWhere">${ADD.ll ? `Pinned at ${ADD.ll[0].toFixed(5)}, ${ADD.ll[1].toFixed(5)}. <a href="#" id="aAdjust">Adjust on the map</a>` : 'No spot chosen yet.'}</p>
       <label>Story or details <small>optional</small><textarea id="aDesc" maxlength="2000" placeholder="Who took it, what was going on, what's there now">${esc(ADD.desc)}</textarea></label>
       <label>Whose photo is this?<select id="aRights"><option value="">Choose one</option>${RIGHTS.map(([v, l]) => `<option value="${v}" ${ADD.rights === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
-      <p class="note">Only share photos you have the right to share. By submitting you let PastPost show it on the map, credited to your username. You can delete it any time.</p>
-      <button class="btn" id="aSend">Submit for review</button>
+      <p class="note">Only post photos you have the right to share. By posting, you let PastPost show it on the map, credited to your username. Posts go live after a quick review, and you can delete them any time.</p>
+      <button class="btn" id="aSend">Post</button>
       <div id="aMsg"></div></div>`;
     const $ = s => body.querySelector(s);
     const keep = () => { ADD.kind = $('#aKind').value; ADD.title = $('#aTitle').value; ADD.year = $('#aYear').value; ADD.approx = $('#aApprox').checked; ADD.place = $('#aPlace').value; ADD.desc = $('#aDesc').value; ADD.rights = $('#aRights').value; };
@@ -425,7 +419,7 @@
     if (!ADD.rights) return err('Tell us whose photo it is.');
     const yr = ADD.year ? parseInt(ADD.year, 10) : null;
     if (yr && (yr < 1830 || yr > new Date().getFullYear())) return err('Check the year.');
-    const btn = $('#aSend'); btn.disabled = true; btn.textContent = 'Uploading…';
+    const btn = $('#aSend'); btn.disabled = true; btn.textContent = 'Posting…';
     try {
       const big = await shrink(ADD.file, 2000, 0.86), small = await shrink(ADD.file, 480, 0.8);
       const id = crypto.randomUUID(), key = `${C.user.id}/${id}.jpg`, tkey = `${C.user.id}/${id}_t.jpg`;
@@ -434,17 +428,17 @@
       r = await C.sb.from('posts').insert({ user_id: C.user.id, title: ADD.title.trim(), description: ADD.desc.trim() || null, year_taken: yr, year_approx: ADD.approx, lat: ADD.ll[0], lon: ADD.ll[1], place_label: ADD.place.trim() || null, pin_method: ADD.method || 'manual', image_key: key, thumb_key: tkey, width: big.w, height: big.h, rights: ADD.rights, kind: ADD.kind });
       if (r.error) throw r.error;
       Object.assign(ADD, { kind: '', file: null, preview: '', title: '', year: '', approx: false, desc: '', rights: '', place: '', ll: null, method: '' });
-      body.innerHTML = `<div class="cf"><p class="ok"><b>Thanks, it’s in.</b><br>Your photo will show on the map once it’s reviewed. You can see its status under Your account.</p><div class="row"><button class="btn" id="aMore">Add another</button><button class="btn ghost" id="aAcct">Your account</button></div></div>`;
+      body.innerHTML = `<div class="cf"><p class="ok"><b>Thanks, it’s posted.</b><br>It will show on the map once it’s reviewed. You can see its status under Your account.</p><div class="row"><button class="btn" id="aMore">Post another</button><button class="btn ghost" id="aAcct">Your account</button></div></div>`;
       body.querySelector('#aMore').onclick = () => addPanel(ADDB, ADDT);
       body.querySelector('#aAcct').onclick = () => { closeAdd(); openDrawer(); openPanel('account'); };
       if (C.prof && C.prof.role === 'admin') C.pending++;
-    } catch (e) { btn.disabled = false; btn.textContent = 'Submit for review'; err(esc(e.message || 'Upload failed. Try again.')); }
+    } catch (e) { btn.disabled = false; btn.textContent = 'Post'; err(esc(e.message || 'Couldn\u2019t post. Try again.')); }
   }
 
 
-  // ---------- full screen "New photo" + plus button ----------
-  const ADDV = document.createElement('div'); ADDV.id = 'cadd'; ADDV.hidden = true; ADDV.setAttribute('role', 'dialog'); ADDV.setAttribute('aria-modal', 'true'); ADDV.setAttribute('aria-label', 'New photo');
-  ADDV.innerHTML = `<header><button type="button" data-x aria-label="Close"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button><span>New photo</span><i></i></header><div class="cb"></div>`;
+  // ---------- full screen "New post" + plus button ----------
+  const ADDV = document.createElement('div'); ADDV.id = 'cadd'; ADDV.hidden = true; ADDV.setAttribute('role', 'dialog'); ADDV.setAttribute('aria-modal', 'true'); ADDV.setAttribute('aria-label', 'New post');
+  ADDV.innerHTML = `<header><button type="button" data-x aria-label="Close"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button><span>New post</span><i></i></header><div class="cb"></div>`;
   document.body.appendChild(ADDV);
   const ADDB = ADDV.querySelector('.cb'), ADDT = ADDV.querySelector('header span');
   ADDV.querySelector('[data-x]').onclick = () => closeAdd();
@@ -453,11 +447,11 @@
     if (!C.user && !hasSession()) { openAuth('post'); return; }
     closeDrawer(); ADDV.hidden = false; document.body.style.overflow = 'hidden';
     ADDB.innerHTML = '<p class="empty">Loading\u2026</p>';
-    loadSB().then(() => { ADDT.textContent = 'New photo'; if (!C.user) { closeAdd(); openAuth('post'); return; } addPanel(ADDB, ADDT); ADDT.textContent = 'New photo'; });
+    loadSB().then(() => { ADDT.textContent = 'New post'; if (!C.user) { closeAdd(); openAuth('post'); return; } addPanel(ADDB, ADDT); ADDT.textContent = 'New post'; });
   }
   function closeAdd() { ADDV.hidden = true; document.body.style.overflow = ''; }
   const Fab = L.Control.extend({ options: { position: 'bottomright' }, onAdd() {
-    const b = L.DomUtil.create('button', 'cfab'); b.type = 'button'; b.setAttribute('aria-label', 'Add a photo'); b.title = 'Add a photo';
+    const b = L.DomUtil.create('button', 'cfab'); b.type = 'button'; b.setAttribute('aria-label', 'Post a photo'); b.title = 'Post a photo';
     b.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
     L.DomEvent.disableClickPropagation(b); L.DomEvent.on(b, 'click', e => { L.DomEvent.preventDefault(e); openAdd(); }); return b; } });
   const fab = new Fab().addTo(map); const corner = fab.getContainer().parentNode; corner.appendChild(fab.getContainer());
@@ -472,7 +466,7 @@
     C.mode = m; CM.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.m === m));
     archivePanes(m !== 'community');
     if (m === 'archive') { if (C.layer) C.layer.remove(); return; }
-    loadPosts().then(() => { if (!C.layer) C.layer = L.layerGroup(); C.layer.addTo(map); if (m === 'community' && !C.posts.length) toast('No community photos yet. Be the first: Menu, Add a photo'); });
+    loadPosts().then(() => { if (!C.layer) C.layer = L.layerGroup(); C.layer.addTo(map); if (m === 'community' && !C.posts.length) toast('No community posts yet. Be the first: tap + to post a photo'); });
   }
   async function loadPosts() {
     if (C.loaded) return; C.loaded = true;
@@ -692,7 +686,7 @@
     try { localStorage.setItem(key, JSON.stringify(seen)); } catch (e) {}
     if (first || !fresh.length) return;
     const live = fresh.filter(p => p.status === 'approved'), no = fresh.filter(p => p.status === 'rejected');
-    setTimeout(() => toast(live.length ? (live.length === 1 ? `\u201c${live[0].title}\u201d is live on the map` : `${live.length} of your photos are live on the map`) : (no.length === 1 ? `\u201c${no[0].title}\u201d wasn\u2019t approved. See Your account` : `${no.length} photos weren\u2019t approved. See Your account`)), 1500);
+    setTimeout(() => toast(live.length ? (live.length === 1 ? `\u201c${live[0].title}\u201d is live on the map` : `${live.length} of your posts are live on the map`) : (no.length === 1 ? `\u201c${no[0].title}\u201d wasn\u2019t approved. See Your account` : `${no.length} photos weren\u2019t approved. See Your account`)), 1500);
   }
 
   // ---------- admin ----------
