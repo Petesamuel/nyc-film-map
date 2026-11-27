@@ -926,7 +926,7 @@ html[data-theme=dark] .sc button.on{background:#44444a}
 </style>
 <script>window.PREF_OVERRIDE={pins:'s',show:'zoom'};</script>
 <script>/* reload once when a newer version of the map is live (GitHub Pages caches pages for 10 minutes) */
-window.BUILD='1795813746';(function(){try{fetch('ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=v.trim();if(v&&v!==window.BUILD&&sessionStorage.getItem('nycmap.rl')!==v){sessionStorage.setItem('nycmap.rl',v);location.reload()}}).catch(()=>{})}catch(e){}})();</script>
+window.BUILD='1795814115';(function(){try{fetch('ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=v.trim();if(v&&v!==window.BUILD&&sessionStorage.getItem('nycmap.rl')!==v){sessionStorage.setItem('nycmap.rl',v);location.reload()}}).catch(()=>{})}catch(e){}})();</script>
 </head>
 <body>
 <div id="app">
@@ -994,13 +994,15 @@ function dec(a){const o=[];let x=0,y=0;for(let i=0;i<a.length;i+=2){x+=a[i];y+=a
 
 const map=L.map('map',{preferCanvas:true,zoomControl:false,minZoom:3,maxZoom:19}).setView([40.745,-73.975],12);
 // ===== appearance settings =====
-const PREF_DEF={theme:'auto',map:'minimal',pscale:1,show:'zoom',view:'pins'};
+const PREF_DEF={theme:'gray',map:'minimal',pscale:0.6,show:'zoom',view:'pins',pv:2};
 const PREF=(()=>{let p={};try{p=JSON.parse(localStorage.getItem('nycmap.prefs'))||{}}catch(e){}
   if(!p.map){try{const o=JSON.parse(localStorage.getItem('nycmap.style'));if(o)p.map=o==='streets'?'standard':o}catch(e){}}
   const MIG={vintage:'detailed',auto:'detailed',standard:'detailed',dark:'detailed',light:'minimal',simple:'minimal',streets:'detailed'};if(MIG[p.map])p.map=MIG[p.map];if(p.pins&&p.pscale==null)p.pscale={s:1,m:1.6,l:2.2}[p.pins]||1;delete p.pins;
+  if(!(p.pv>=2)){if(!p.theme||p.theme==='auto')p.theme='gray';if(p.pscale==null||p.pscale==1)p.pscale=0.6;p.pv=2}
   return Object.assign({},PREF_DEF,window.PREF_OVERRIDE||{},p)})();
 const darkMQ=window.matchMedia?matchMedia('(prefers-color-scheme: dark)'):null;
 function isDark(){return PREF.theme==='dark'||(PREF.theme==='auto'&&darkMQ&&darkMQ.matches)}
+function isGray(){return !isDark()&&(PREF.theme==='gray'||PREF.theme==='auto')}
 function applyTheme(){document.documentElement.dataset.theme=isDark()?'dark':'light';const mc=document.querySelector('meta[name=theme-color]');if(mc)mc.content=isDark()?'#1f1f22':'#ffffff'}
 applyTheme();
 // Vector basemap drawn from NYC street centerlines (works everywhere, no tiles needed)
@@ -1017,7 +1019,7 @@ const BaseLayer=L.Layer.extend({
     const z=m.getZoom(),b=m.getBounds().pad(.05);
     const P=ll=>{const p=m.latLngToContainerPoint(ll);return p};
     const path=(pts,close)=>{g.beginPath();pts.forEach((ll,i)=>{const p=P(ll);i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)});if(close)g.closePath()};
-    const BP=isDark()?{land:'#26272b',st:'#36373c',hw:'#5a5040',halo:'rgba(38,39,43,.95)',lm:'#d8d4cc',ln:'#9c978e'}:{land:'#f3eee4',st:'#d9cfbe',hw:'#e2c79a',halo:'rgba(243,238,228,.95)',lm:'#3f382f',ln:'#6b6256'};
+    const BP=isDark()?{land:'#26272b',st:'#36373c',hw:'#5a5040',halo:'rgba(38,39,43,.95)',lm:'#d8d4cc',ln:'#9c978e'}:isGray()?{land:'#e8e8e6',st:'#d2d2cf',hw:'#c6c6c2',halo:'rgba(232,232,230,.95)',lm:'#4f4f53',ln:'#77777b'}:{land:'#f3eee4',st:'#d9cfbe',hw:'#e2c79a',halo:'rgba(243,238,228,.95)',lm:'#3f382f',ln:'#6b6256'};
     g.fillStyle=BP.land;this._land.forEach(p=>{path(p,true);g.fill()});
     const vis=pts=>{for(const ll of pts){if(b.contains(ll))return true}return false};
     if(z>=13){g.strokeStyle=BP.st;g.lineWidth=z>=16?3:z>=15?1.8:1;g.lineCap='round';
@@ -1049,7 +1051,7 @@ const BaseLayer=L.Layer.extend({
 // Real map tiles load when the page is opened in a normal browser; if blocked, the vector map above shows through.
 const OSMF=c=>L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,className:c,attribution:'&copy; OpenStreetMap'});
 const ESRI=(n,c)=>L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/'+n+'/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,maxNativeZoom:16,className:c||'',attribution:'&copy; Esri, HERE, Garmin, OpenStreetMap'});
-const TILE_STYLES={minimal:ESRI('Canvas/World_Light_Gray_Base'),minimalDark:ESRI('Canvas/World_Dark_Gray_Base'),heatLight:ESRI('Canvas/World_Light_Gray_Base','t-heat'),
+const TILE_STYLES={minimal:ESRI('Canvas/World_Light_Gray_Base'),minimalGray:ESRI('Canvas/World_Light_Gray_Base'),detailedGray:ESRI('Canvas/World_Light_Gray_Base'),minimalDark:ESRI('Canvas/World_Dark_Gray_Base'),heatLight:ESRI('Canvas/World_Light_Gray_Base','t-heat'),
   detailed:L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; OpenStreetMap'}),detailedDark:OSMF('t-dark'),vintage:OSMF('t-vintage'),
   satellite:L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Imagery &copy; Esri'})};
 const _unusedTiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,opacity:.85,
@@ -1404,6 +1406,8 @@ const PAL={
    bld:'#e7dcc6',bldL:'#d6c7aa',minor:'#fffaf1',path:'#e8dcc6',case:'#e0d1b4',sec:'#fbe8bc',pri:'#f5d48f',priC:'#ddb46c',mw:'#efb979',mwC:'#d09456',rail:'#b9a98f',bound:'#a8987f',text:'#4a3f33',text2:'#6e604f',wtext:'#4d7f8a',halo:'#f8f2e4'},
  dark:{land:'#25231f',res:'#28251f',park:'#27301f',park2:'#33402a',wood:'#26321f',grass:'#29321f',water:'#1c2b31',water2:'#24363d',sand:'#332e24',cem:'#2a2e24',hosp:'#342725',school:'#2f2a22',aero:'#2c2925',
    bld:'#302c26',bldL:'#3a352d',minor:'#3b3730',path:'#34302a',case:'#2b2823',sec:'#4a4236',pri:'#5d4d36',priC:'#3b3226',mw:'#6f5636',mwC:'#43351f',rail:'#4b453c',bound:'#5a5244',text:'#ddd2bf',text2:'#a89d8b',wtext:'#7ea4ad',halo:'#1d1b18'},
+ gray:{land:'#e8e8e6',res:'#e5e5e3',park:'#d5dece',park2:'#c6d1bd',wood:'#d2dbca',grass:'#dae1d3',water:'#c3c9ce',water2:'#b4bbc1',sand:'#e5e1d7',cem:'#d8dcd2',hosp:'#e7dfdd',school:'#e5e2dc',aero:'#dfdedb',
+   bld:'#dcdcd9',bldL:'#cdcdc9',minor:'#ffffff',path:'#dbdbd8',case:'#d2d2cf',sec:'#fbfbfa',pri:'#f5f5f3',priC:'#cbcbc8',mw:'#eeeeeb',mwC:'#c6c6c2',rail:'#bcbcb8',bound:'#a8a8a4',text:'#4f4f53',text2:'#77777b',wtext:'#647280',halo:'#f3f3f1'},
  white:{land:'#f8f6f1',res:'#f6f3ec',park:'#e8ede0',park2:'#dde4d2',wood:'#e4eadb',grass:'#e9eee1',water:'#dce7ea',water2:'#cfdde1',sand:'#f2ede1',cem:'#ebeee4',hosp:'#f4ebe7',school:'#f2eee5',aero:'#efece6',
    bld:'#efebe3',bldL:'#e2ddd2',minor:'#ffffff',path:'#ebe6dc',case:'#e4ded2',sec:'#fdf8ee',pri:'#fbf1dc',priC:'#e6dcc7',mw:'#f7e6c6',mwC:'#e0cfae',rail:'#cfc8bb',bound:'#bdb5a7',text:'#6c655b',text2:'#8a8377',wtext:'#7b98a0',halo:'#fbfaf7'}};
 // satellite: aerial photos with only street, place and water names on top (no road lines or icons)
@@ -1443,7 +1447,7 @@ function glStyle(pal,minimal){if(pal==='sat')return satStyle();const P=PAL[pal],
     else if(l.type==='symbol'&&l.layout&&l.layout['text-field']){p['text-color']=/water/.test(id)?P.wtext:/^poi|highway-name-path/.test(id)?P.text2:P.text;p['text-halo-color']=P.halo;p['text-halo-width']=1.4}}
   return st}
 let baseTiles=null,glTimer=null;
-function setStyle(k){const GLK={minimal:['light',1],minimalDark:['dark',1],detailed:['light',0],detailedDark:['dark',0],heatLight:['white',1],satellite:['sat',1]}[k];
+function setStyle(k){const GLK={minimal:['light',1],minimalGray:['gray',1],detailedGray:['gray',0],minimalDark:['dark',1],detailed:['light',0],detailedDark:['dark',0],heatLight:['white',1],satellite:['sat',1]}[k];
   const raster=()=>{if(GLBASE&&map.hasLayer(GLBASE))map.removeLayer(GLBASE);if(baseTiles&&baseTiles!==TILE_STYLES[k]){map.removeLayer(baseTiles);baseTiles=null}if(TILE_STYLES[k]&&!baseTiles)baseTiles=TILE_STYLES[k].addTo(map)};
   if(!GLK){GLKEY=null;raster();return}
   if(!baseTiles&&!(GLBASE&&map.hasLayer(GLBASE)))raster(); // show the raster map until the vector map is ready
@@ -1453,8 +1457,8 @@ function setStyle(k){const GLK={minimal:['light',1],minimalDark:['dark',1],detai
     const gm=GLBASE.getMaplibreMap(),done=()=>{if(GLKEY===k&&baseTiles){map.removeLayer(baseTiles);baseTiles=null}};
     if(gm.isStyleLoaded())setTimeout(done,300);else gm.once('idle',done);clearTimeout(glTimer);glTimer=setTimeout(done,6000)
   }).catch(()=>{GLKEY=null;raster()})}
-function mapKey(){const d=isDark();if(PREF.view==='heat')return d?'minimalDark':'heatLight';
-  if(PREF.map==='minimal')return d?'minimalDark':'minimal';if(PREF.map==='detailed')return d?'detailedDark':'detailed';return PREF.map}
+function mapKey(){const d=isDark(),g=isGray();if(PREF.view==='heat')return d?'minimalDark':'heatLight';
+  if(PREF.map==='minimal')return d?'minimalDark':g?'minimalGray':'minimal';if(PREF.map==='detailed')return d?'detailedDark':g?'detailedGray':'detailed';return PREF.map}
 function savePref(){try{localStorage.setItem('nycmap.prefs',JSON.stringify(PREF))}catch(e){}}
 function applyAll(){applyTheme();setStyle(mapKey());BASE_L._draw();render();if(typeof HEATBTN!=='undefined'&&HEATBTN._a)HEATBTN._a.classList.toggle('on',PREF.view==='heat')}
 function setPref(k,v){PREF[k]=v;savePref();applyAll();openPanel('appear')}
@@ -1462,14 +1466,14 @@ if(darkMQ)darkMQ.addEventListener('change',()=>{if(PREF.theme==='auto')applyAll(
 setStyle(mapKey());
 function appearHTML(){
   const seg=(k,opts)=>`<div class="sc" role="radiogroup">${opts.map(([v,n])=>`<button role="radio" aria-checked="${PREF[k]===v}" class="${PREF[k]===v?'on':''}" data-pref="${k}" data-v="${v}">${n}</button>`).join('')}</div>`;
-  const TX='15/12318/9650',TO='15/9650/12318',dk=isDark(),Pp=PAL[dk?'dark':'light'];
+  const TX='15/12318/9650',TO='15/9650/12318',dk=isDark(),Pp=PAL[dk?'dark':isGray()?'gray':'light'];
   const svg=(P,det)=>`url(data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 64' preserveAspectRatio='xMidYMid slice'><rect width='160' height='64' fill='${P.land}'/><path d='M120 0h40v64h-62z' fill='${P.water}'/><rect x='22' y='34' width='34' height='20' rx='2' fill='${P.park}'/>${det?`<rect x='64' y='8' width='14' height='10' fill='${P.bld}' stroke='${P.bldL}'/><rect x='84' y='22' width='12' height='9' fill='${P.bld}' stroke='${P.bldL}'/>`:''}<g stroke='${P.case}' stroke-width='5'><path d='M0 26h120M0 58h110M60 0v64'/></g><g stroke='${P.minor}' stroke-width='3.5'><path d='M0 26h120M0 58h110M60 0v64'/></g>${det?`<path d='M0 12L130 50' stroke='${P.priC}' stroke-width='7'/><path d='M0 12L130 50' stroke='${P.pri}' stroke-width='5'/><circle cx='40' cy='18' r='3' fill='#c8794a'/><circle cx='96' cy='42' r='3' fill='#5b8fb0'/>`:''}</svg>`).replace(/'/g,'%27')})`;
   const PV={minimal:svg(Pp,0),detailed:svg(Pp,1),
     vintage:`url(https://tile.openstreetmap.org/${TO}.png)`,satellite:`url(https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${TX})`};
   const maps=[['minimal','Minimal'],['detailed','Detailed'],['satellite','Satellite']];
   return `<div class="set">
-  <h4>Theme</h4>${seg('theme',[['light','Light'],['dark','Dark'],['auto','Automatic']])}
-  <p class="hint">Automatic follows your device's light or dark setting.</p>
+  <h4>Theme</h4>${seg('theme',[['light','Light'],['gray','Gray'],['dark','Dark'],['auto','Auto']])}
+  <p class="hint">Auto uses Gray or Dark to match your device.</p>
   <h4>Show pins</h4>${seg('show',[['always','Always'],['zoom','Zoomed in'],['close','Up close']])}
   <p class="hint">Zoomed in shows small pins from the city view, Up close from a few blocks. They start as small dots and grow as you zoom in. Searches and filters always show their pins.</p>
   <button class="btn ghost reset" data-resetpref>Reset to defaults</button></div>`}
