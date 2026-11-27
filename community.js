@@ -5,6 +5,10 @@
   const SB = 'https://iurancbmhdizoafdhctq.supabase.co';
   const KEY = 'sb_publishable_bdXBpE0UULjIjYDNrHg83g_DsW0WUsb';
   const PUB = SB + '/storage/v1/object/public/uploads/';
+  // Sign-in options shown on the login screen. Apple and Facebook turn on once they're set up in Supabase.
+  const SSO = { apple: false, google: true, facebook: false };
+  const ALOGO = '<svg width="18" height="18" viewBox="0 0 814 1000" aria-hidden="true"><path fill="#000" d="M788 340c-6 4-108 62-108 190 0 148 130 200 134 202-1 3-21 72-69 142-43 62-88 124-156 124s-86-40-164-40c-77 0-104 41-166 41s-106-57-156-128C44 788 0 668 0 554 0 371 119 274 236 274c62 0 114 41 153 41 37 0 95-43 166-43 27 0 124 2 188 93zM554 159c29-35 50-83 50-131 0-7-1-14-2-19-48 2-104 32-138 72-27 30-52 78-52 127 0 7 1 15 2 17 3 1 8 1 13 1 43 0 97-29 127-67z"/></svg>';
+  const FLOGO = '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="#0866FF" d="M24 12a12 12 0 1 0-13.9 11.9v-8.4H7.1V12h3V9.4c0-3 1.8-4.7 4.5-4.7 1.3 0 2.7.2 2.7.2v2.9h-1.5c-1.5 0-2 .9-2 1.9V12h3.4l-.5 3.5h-2.9v8.4A12 12 0 0 0 24 12z"/><path fill="#fff" d="M16.7 15.5l.5-3.5h-3.4V9.7c0-1 .5-1.9 2-1.9h1.5V4.9s-1.4-.2-2.7-.2c-2.8 0-4.5 1.7-4.5 4.7V12h-3v3.5h3v8.4a12 12 0 0 0 3.7 0v-8.4z"/></svg>';
   const SUPPORT_ON = false; // set by build_pages.py when a Stripe link exists
   const NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
   const APP_CB = 'com.petesamuel.pastpost://auth';
@@ -125,6 +129,7 @@
   #cauth .in{padding:24px}
   #cauth h2{font-size:22px;margin:0 0 6px;font-weight:700}
   #cauth p{margin:0 0 18px;font-size:14px;color:#6a6a6a;line-height:1.45}
+  .sso{display:grid;gap:10px}
   .gbtn-g{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:44px;border:1px solid #747775;border-radius:12px;background:#fff;color:#1f1f1f;font:500 14px Roboto,Arial,sans-serif;cursor:pointer}
   .gbtn-g:hover{background:#f8f9fa;box-shadow:0 1px 2px rgba(60,64,67,.3)}
   .gbtn-g svg{width:20px;height:20px}
@@ -234,7 +239,7 @@
     AUTH.innerHTML = `<div class="box"><header><button type="button" data-x aria-label="Close">${XICO}</button>Log in or sign up</header><div class="in">
       <h2>Welcome to PastPost</h2>
       <p>${why || 'Log in to share your own photos of the city and see them on the map.'}</p>
-      <button type="button" class="gbtn-g" data-google>${GLOGO}<span>Continue with Google</span></button>
+      <div class="sso">${SSO.apple ? `<button type="button" class="gbtn-g" data-sso="apple">${ALOGO}<span>Continue with Apple</span></button>` : ''}${SSO.google ? `<button type="button" class="gbtn-g" data-sso="google">${GLOGO}<span>Continue with Google</span></button>` : ''}${SSO.facebook ? `<button type="button" class="gbtn-g" data-sso="facebook">${FLOGO}<span>Continue with Facebook</span></button>` : ''}</div>
       <div class="or">or</div>
       <label for="cEmail" style="position:absolute;left:-9999px">Email</label>
       <input type="email" id="cEmail" autocomplete="email" placeholder="Email" inputmode="email">
@@ -243,12 +248,12 @@
       <p class="fine">By continuing, you agree to the <a href="terms/">Terms of Use</a> and acknowledge the <a href="privacy/">Privacy Policy</a>.</p>
     </div></div>`;
     AUTH.querySelector('[data-x]').onclick = closeAuth;
-    AUTH.querySelector('[data-google]').onclick = async () => {
+    AUTH.querySelectorAll('[data-sso]').forEach(b => b.onclick = async () => {
       await loadSB();
-      const { data, error } = await C.sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: backTo(), skipBrowserRedirect: NATIVE } });
+      const { data, error } = await C.sb.auth.signInWithOAuth({ provider: b.dataset.sso, options: { redirectTo: backTo(), skipBrowserRedirect: NATIVE } });
       if (error) { AUTH.querySelector('#cErr').textContent = error.message; return; }
       if (NATIVE && data && data.url) window.Capacitor.Plugins.Browser.open({ url: data.url, presentationStyle: 'popover' });
-    };
+    });
     const go = async () => {
       const email = AUTH.querySelector('#cEmail').value.trim(), errEl = AUTH.querySelector('#cErr'), btn = AUTH.querySelector('[data-email]');
       if (!/^\S+@\S+\.\S+$/.test(email)) { errEl.textContent = 'Enter a valid email address.'; return; }
@@ -275,7 +280,7 @@
     };
     AUTH.querySelector('[data-email]').onclick = go;
     AUTH.querySelector('#cEmail').onkeydown = e => { if (e.key === 'Enter') go(); };
-    setTimeout(() => AUTH.querySelector('[data-google]').focus(), 50);
+    if (!(window.matchMedia && matchMedia('(pointer:coarse)').matches)) setTimeout(() => { const f = AUTH.querySelector('[data-sso]'); if (f) f.focus(); }, 50);
   }
   function closeAuth() { if (AUTH) AUTH.hidden = true; }
   function signInForm(body, why) { showNavSafe(); openAuth(why); }
