@@ -257,8 +257,20 @@
       const { error } = await C.sb.auth.signInWithOtp({ email, options: { emailRedirectTo: backTo() } });
       btn.disabled = false;
       if (error) { errEl.textContent = /rate limit/i.test(error.message) ? 'We can\u2019t send more emails right now. Try Continue with Google, or try again later.' : error.message; return; }
-      AUTH.querySelector('.in').innerHTML = `<h2>Check your email</h2><p>We sent a sign in link to <b style="color:#222">${esc(email)}</b>. Open it on this device to finish. It can take a minute, and might land in spam.</p><button type="button" class="pri" data-done>Got it</button><p class="fine"><button type="button" class="lnk" data-back>Use a different email</button></p>`;
-      AUTH.querySelector('[data-done]').onclick = closeAuth;
+      AUTH.querySelector('.in').innerHTML = `<h2>Check your email</h2><p>We sent a sign-in link and a 6-digit code to <b style="color:#222">${esc(email)}</b>. Tap the link, or enter the code here. It can take a minute, and might land in spam.</p><input type="text" id="cCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code" style="text-align:center;font-size:20px"><button type="button" class="pri" data-code>Sign in</button><div class="err" id="cErr" role="alert"></div><p class="fine"><button type="button" class="lnk" data-back>Use a different email</button></p>`;
+      const codeEl = AUTH.querySelector('#cCode'), codeBtn = AUTH.querySelector('[data-code]');
+      const verify = async () => {
+        const token = codeEl.value.replace(/\D/g, ''), err = AUTH.querySelector('#cErr');
+        if (token.length !== 6) { err.textContent = 'Enter the 6-digit code from the email.'; return; }
+        codeBtn.disabled = true; err.textContent = '';
+        const { error } = await C.sb.auth.verifyOtp({ email, token, type: 'email' });
+        codeBtn.disabled = false;
+        if (error) { err.textContent = /expired|invalid/i.test(error.message) ? 'That code didn\u2019t work or has expired. Check the newest email, or go back and send a new one.' : error.message; return; }
+        closeAuth();
+      };
+      codeBtn.onclick = verify;
+      codeEl.oninput = () => { codeEl.value = codeEl.value.replace(/\D/g, '').slice(0, 6); codeEl.style.letterSpacing = codeEl.value ? '6px' : ''; if (codeEl.value.length === 6) verify(); };
+      setTimeout(() => codeEl.focus(), 50);
       AUTH.querySelector('[data-back]').onclick = () => openAuth(why);
     };
     AUTH.querySelector('[data-email]').onclick = go;
