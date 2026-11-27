@@ -79,3 +79,8 @@
 - Resend free plan: 3,000 emails/month, 100/day. Supabase email rate limit after custom SMTP defaults to 30/hour; raise in Auth > Rate Limits if needed.
 - Admin dashboard live at /admin (migration 0009).
 - Optional later: Gmail "Send mail as" support@pastpostapp.com via smtp.resend.com so replies come from the PastPost address.
+
+## Sign in with Apple and Facebook (buttons built, switched off)
+- Turn on in pages/community.js: const SSO = { apple: true/false, google: true, facebook: true/false }.
+- Apple: needs the Apple Developer account. Create a Services ID + Sign in with Apple key, add to Supabase Auth > Providers > Apple (Pete pastes the key). Required for the iOS app because Google sign-in is offered.
+- Facebook: Pete creates a Meta developer app (developers.facebook.com) with Facebook Login; add App ID + secret to Supabase Auth > Providers > Facebook; privacy policy URL https://pastpostapp.com/privacy/ and a data deletion page.
