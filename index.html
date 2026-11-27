@@ -925,7 +925,7 @@ html[data-theme=dark] .sc button.on{background:#44444a}
 .set .reset{margin-top:22px;width:100%}
 </style>
 <script>/* reload once when a newer version of the map is live (GitHub Pages caches pages for 10 minutes) */
-window.BUILD='1795813345';(function(){try{fetch('ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=v.trim();if(v&&v!==window.BUILD&&sessionStorage.getItem('nycmap.rl')!==v){sessionStorage.setItem('nycmap.rl',v);location.reload()}}).catch(()=>{})}catch(e){}})();</script>
+window.BUILD='1795813746';(function(){try{fetch('ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=v.trim();if(v&&v!==window.BUILD&&sessionStorage.getItem('nycmap.rl')!==v){sessionStorage.setItem('nycmap.rl',v);location.reload()}}).catch(()=>{})}catch(e){}})();</script>
 </head>
 <body>
 <div id="app">
@@ -1420,7 +1420,9 @@ function loadGL(){if(glLoading)return glLoading;glLoading=new Promise((ok,no)=>{
     const b=document.createElement('script');b.src='vendor/leaflet-maplibre-gl.js';b.onerror=no;b.onload=()=>{
       fetch('https://tiles.openfreemap.org/styles/liberty').then(r=>r.json()).then(j=>{GLSTYLE=j;ok()}).catch(no)};document.head.appendChild(b)};document.head.appendChild(a)});return glLoading}
 function glStyle(pal,minimal){if(pal==='sat')return satStyle();const P=PAL[pal],st=JSON.parse(JSON.stringify(GLSTYLE));
-  st.layers=st.layers.filter(l=>l.id!=='natural_earth'&&l.type!=='fill-extrusion'&&!(minimal&&/^(poi_|road_one_way|highway-shield|road_shield)/.test(l.id)));
+  // minimal map: streets and their names, water and parks only. No paths, sidewalks, borders, rail, tunnels, driveways or outlines (the detailed map keeps them)
+  const MIN_DROP=/^(poi_|road_one_way|highway-shield|road_shield|highway-name-path|boundary|park_outline|waterway_tunnel|aeroway_(runway|taxiway)$|(tunnel|road|bridge)_(path_pedestrian|major_rail|transit_rail|service_track)|tunnel_)/;
+  st.layers=st.layers.filter(l=>l.id!=='natural_earth'&&l.type!=='fill-extrusion'&&!(minimal&&MIN_DROP.test(l.id)));
   // label timing like Google Maps (map zoom here is one step below the page zoom): avenues from the borough view, local streets from the neighborhood view
   const MZ={'highway-name-major':11,'highway-name-minor':13,'highway-name-path':14.5,poi_r1:14,poi_r7:15,poi_r20:16},TS=['interpolate',['linear'],['zoom'],11,10,13,11,15,13,17,15];
   for(const l of st.layers){if(MZ[l.id]!==undefined)l.minzoom=MZ[l.id];if(/^highway-name/.test(l.id)){l.layout['text-size']=TS;l.layout['symbol-spacing']=220}}
