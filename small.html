@@ -21,8 +21,11 @@
 <style>@font-face{font-family:Figtree;font-style:normal;font-weight:400;font-display:swap;src:url(vendor/fonts/figtree-latin-400-normal.woff2) format('woff2')}@font-face{font-family:Figtree;font-style:normal;font-weight:500;font-display:swap;src:url(vendor/fonts/figtree-latin-500-normal.woff2) format('woff2')}@font-face{font-family:Figtree;font-style:normal;font-weight:600;font-display:swap;src:url(vendor/fonts/figtree-latin-600-normal.woff2) format('woff2')}@font-face{font-family:Figtree;font-style:normal;font-weight:700;font-display:swap;src:url(vendor/fonts/figtree-latin-700-normal.woff2) format('woff2')}#count{display:none!important}
 @media (hover:none) and (pointer:coarse){.leaflet-control-zoom{display:none!important}}
 .leaflet-control-attribution{display:none!important}
-body.attr-open .leaflet-control-attribution{display:block!important;max-width:calc(100vw - 70px);border-radius:8px;padding:4px 8px!important;font-size:11px}
-.attrbtn{width:26px!important;height:26px!important;line-height:26px!important;border-radius:50%!important;font:italic 700 13px Georgia,serif!important;display:grid!important;place-items:center;text-decoration:none}
+body.attr-open .leaflet-control-attribution{display:block!important;position:fixed;z-index:1100;left:10px;bottom:calc(62px + env(safe-area-inset-bottom));margin:0!important;max-width:min(300px,calc(100vw - 20px));background:var(--paper)!important;color:var(--muted);border-radius:12px;padding:10px 12px!important;font-size:12px;line-height:1.5;white-space:normal;box-shadow:var(--shadow)}
+body.attr-open .leaflet-control-attribution a{color:inherit!important;text-decoration:underline;text-underline-offset:2px}
+body.attr-open .leaflet-control-attribution::before{content:"Map data";display:block;font-weight:600;color:var(--ink);margin-bottom:2px}
+.attrbtn{font:italic 700 17px Georgia,serif!important;display:grid!important;place-items:center;text-decoration:none}
+body.attr-open .attrbtn{background:var(--ink)!important;color:var(--paper)!important}
 </style>
 <style>
 /* required styles */
@@ -754,7 +757,9 @@ button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #1d1c
 .chip.reset{background:transparent;box-shadow:none;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
 .hidden-selects{display:none}
 #count{position:absolute;z-index:900;left:10px;bottom:calc(14px + env(safe-area-inset-bottom));background:var(--glass);color:var(--muted);font-size:12px;font-weight:500;padding:5px 10px;border-radius:12px;box-shadow:var(--shadow)}
-.leaflet-bottom.leaflet-right{margin-bottom:calc(6px + env(safe-area-inset-bottom))}
+.leaflet-bottom.leaflet-right,.leaflet-bottom.leaflet-left{margin-bottom:calc(6px + env(safe-area-inset-bottom))}
+.leaflet-bottom .leaflet-control{margin-bottom:10px}
+.leaflet-bottom.leaflet-left .leaflet-control-attribution{margin-bottom:0}
 .leaflet-bar{border:0!important;box-shadow:var(--shadow)!important;border-radius:12px!important;overflow:hidden}
 .leaflet-bar a{width:40px!important;height:40px!important;line-height:40px!important;color:var(--ink)!important;border-bottom-color:var(--line)!important;font-size:20px!important}
 .locbtn{display:grid!important;place-items:center}
@@ -920,7 +925,7 @@ html[data-theme=dark] .sc button.on{background:#44444a}
 </style>
 <script>window.PREF_OVERRIDE={pins:'s',show:'zoom'};</script>
 <script>/* reload once when a newer version of the map is live (GitHub Pages caches pages for 10 minutes) */
-window.BUILD='1795810287';(function(){try{fetch('ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=v.trim();if(v&&v!==window.BUILD&&sessionStorage.getItem('nycmap.rl')!==v){sessionStorage.setItem('nycmap.rl',v);location.reload()}}).catch(()=>{})}catch(e){}})();</script>
+window.BUILD='1795812820';(function(){try{fetch('ver.txt?'+Date.now(),{cache:'no-store'}).then(r=>r.ok?r.text():'').then(v=>{v=v.trim();if(v&&v!==window.BUILD&&sessionStorage.getItem('nycmap.rl')!==v){sessionStorage.setItem('nycmap.rl',v);location.reload()}}).catch(()=>{})}catch(e){}})();</script>
 </head>
 <body>
 <div id="app">
@@ -1470,7 +1475,11 @@ function appearHTML(){
 L.control.zoom({position:'bottomright'}).addTo(map);
 map.attributionControl.setPrefix(false);map.attributionControl.setPosition('bottomleft');
 const AttrBtn=L.Control.extend({options:{position:'bottomleft'},onAdd(){const d=L.DomUtil.create('div','leaflet-bar');const a=L.DomUtil.create('a','attrbtn',d);a.href='#';a.textContent='i';a.title='Map credits';a.setAttribute('role','button');a.setAttribute('aria-label','Map credits');
-  L.DomEvent.on(a,'click',e=>{L.DomEvent.preventDefault(e);document.body.classList.toggle('attr-open')});L.DomEvent.disableClickPropagation(d);return d}});new AttrBtn().addTo(map);
+  L.DomEvent.on(a,'click',e=>{L.DomEvent.preventDefault(e);document.body.classList.toggle('attr-open')});map.on('click movestart',()=>document.body.classList.remove('attr-open'));document.addEventListener('click',e=>{if(!e.target.closest('.attrbtn,.leaflet-control-attribution'))document.body.classList.remove('attr-open')},true);document.addEventListener('keydown',e=>{if(e.key==='Escape')document.body.classList.remove('attr-open')});L.DomEvent.disableClickPropagation(d);return d}});new AttrBtn().addTo(map);
+// Tidy the credits: one list, each name once (base maps share OpenStreetMap)
+(function(){const ac=map.attributionControl;if(!ac)return;ac.setPrefix(false);const orig=ac._update.bind(ac);ac._update=function(){orig();const c=this._container;if(!c)return;const seen=new Set(),out=[];
+  c.innerHTML.split(/\s*(?:,|&copy;|©|\|)\s*/).forEach(t=>{t=t.trim();const k=t.replace(/<[^>]+>/g,'').replace(/^Imagery\s*/i,'').toLowerCase();if(k&&!seen.has(k)){seen.add(k);out.push(t.replace(/^Imagery\s*/i,''))}});
+  c.innerHTML=out.length?'© '+out.join(', '):''};ac._update()})();
 const Loc=L.Control.extend({options:{position:'bottomright'},onAdd(){const d=L.DomUtil.create('div','leaflet-bar');const a=L.DomUtil.create('a','locbtn',d);a.href='#';a.title='Show my location';a.setAttribute('role','button');a.innerHTML=IC.loc;
   L.DomEvent.on(a,'click',e=>{L.DomEvent.preventDefault(e);action('near')});L.DomEvent.disableClickPropagation(d);return d}});new Loc().addTo(map);
 const HeatBtn=L.Control.extend({options:{position:'bottomright'},onAdd(){const d=L.DomUtil.create('div','leaflet-bar');const a=L.DomUtil.create('a','heatbtn',d);a.href='#';a.title='Heat map';a.setAttribute('role','button');a.setAttribute('aria-label','Heat map');

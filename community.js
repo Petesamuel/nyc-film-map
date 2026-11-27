@@ -37,8 +37,8 @@
   #cpick .x{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-34px 0 0 -17px}
   #cpick .bar{pointer-events:auto;position:absolute;left:12px;right:12px;bottom:calc(16px + env(safe-area-inset-bottom));max-width:440px;margin:0 auto;background:var(--paper);border-radius:16px;box-shadow:var(--shadow);padding:14px;display:grid;gap:10px;font-size:14px}
   #cpick .bar div{display:flex;gap:8px}
-  #cmode{position:fixed;z-index:1000;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom));display:flex;background:var(--paper);border-radius:20px;box-shadow:var(--shadow);padding:3px}
-  #cmode button{border:0;background:none;font:600 13px Figtree,sans-serif;color:var(--muted);height:32px;padding:0 14px;border-radius:16px;cursor:pointer}
+  #cmode{position:fixed;z-index:1000;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom));display:flex;background:var(--paper);border-radius:12px;box-shadow:var(--shadow);padding:3px}
+  #cmode button{border:0;background:none;font:600 13px Figtree,sans-serif;color:var(--muted);height:34px;padding:0 14px;border-radius:9px;cursor:pointer}
   #cmode button.on{background:var(--ink);color:var(--paper)}
   .cpopw .leaflet-popup-content-wrapper{background:var(--paper);color:var(--ink)}
   .cpopw .leaflet-popup-content{width:min(calc(100vw - 48px),320px)!important}
@@ -59,7 +59,7 @@
   #cadd header{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;height:calc(54px + env(safe-area-inset-top));padding:env(safe-area-inset-top) 6px 0;border-bottom:1px solid var(--line);font-weight:700;font-size:16px;text-align:center;color:var(--ink)}
   #cadd header button{width:44px;height:44px;border:0;background:none;color:var(--ink);cursor:pointer;display:grid;place-items:center;border-radius:50%}
   #cadd .cb{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;width:100%;max-width:560px;margin:0 auto;padding-bottom:calc(24px + env(safe-area-inset-bottom))}
-  .cfab{width:56px;height:56px;border-radius:50%;border:0;background:var(--accent,#f2b705);color:#1d1c1a;box-shadow:0 4px 14px rgba(0,0,0,.28);display:grid;place-items:center;cursor:pointer;margin-top:12px!important}
+  .cfab{width:40px;height:40px;border-radius:12px;border:0;background:var(--accent,#f2b705);color:#1d1c1a;box-shadow:var(--shadow);display:grid;place-items:center;cursor:pointer;padding:0}
   .cfab:active{transform:scale(.96)}
   .cfab:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
   .acts{flex-wrap:wrap}
@@ -440,7 +440,7 @@
   function closeAdd() { ADDV.hidden = true; document.body.style.overflow = ''; }
   const Fab = L.Control.extend({ options: { position: 'bottomright' }, onAdd() {
     const b = L.DomUtil.create('button', 'cfab'); b.type = 'button'; b.setAttribute('aria-label', 'Add a photo'); b.title = 'Add a photo';
-    b.innerHTML = '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+    b.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
     L.DomEvent.disableClickPropagation(b); L.DomEvent.on(b, 'click', e => { L.DomEvent.preventDefault(e); openAdd(); }); return b; } });
   const fab = new Fab().addTo(map); const corner = fab.getContainer().parentNode; corner.appendChild(fab.getContainer());
 
